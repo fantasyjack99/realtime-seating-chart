@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   seat-map-app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: seat-map-app:latest
     container_name: seat-map-app
     restart: unless-stopped
@@ -16,5 +18,11 @@ services:
     volumes:
       # 【重要】將資料庫檔案掛載到外部，避免容器更新或重啟時資料遺失
       # 請確保您的 Synology NAS 上有對應的目錄，例如 ./data
-      # 如果您希望直接掛載單一檔案，可以先在主機上建立一個空的 seats.db 檔案，然後使用 './seats.db:/app/seats.db'
       - ./data:/app/data
+    networks:
+      - seat-map-network
+
+networks:
+  seat-map-network:
+    name: seat-map-network
+    driver: bridge
