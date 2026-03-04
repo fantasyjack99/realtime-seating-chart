@@ -16,9 +16,8 @@ services:
       - NODE_ENV=production
       - PORT=3000
     volumes:
-      # 【重要】將資料庫檔案掛載到外部，避免容器更新或重啟時資料遺失
-      # 請確保您的 Synology NAS 上有對應的目錄，例如 ./data
-      - ./data:/app/data
+      # 使用 Docker Named Volume，由 Docker 自動管理儲存位置，避免路徑不存在的問題
+      - seat-map-data:/app/data
     networks:
       - seat-map-network
 
@@ -26,3 +25,7 @@ networks:
   seat-map-network:
     name: seat-map-network
     driver: bridge
+
+volumes:
+  seat-map-data:
+    name: seat-map-data
