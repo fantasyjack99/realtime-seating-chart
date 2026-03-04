@@ -1,0 +1,5 @@
+{
+  "name": "文策院分機座位圖",
+  "description": "具備視覺化互動與硬體資產管理的動態座位系統，支援拖拉換位與即時同步。",
+  "requestFramePermissions": []
+}

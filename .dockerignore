@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.git
+.gitignore
+seats.db
+seats.db-journal
+seats.db-wal
+seats.db-shm

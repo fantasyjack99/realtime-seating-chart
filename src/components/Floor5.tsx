@@ -1,0 +1,213 @@
+import React from 'react';
+import { Seat } from '../types';
+import { SeatCard } from './SeatCard';
+import { departmentLayouts } from '../layouts';
+
+interface FloorProps {
+  seats: Seat[];
+  isHardwareUnlocked: boolean;
+  isEngineeringMode: boolean;
+  onUpdateSeat: (seat: Seat) => void;
+  getSeat: (id: string, defaultName?: string, dept?: string) => Seat;
+  onEditClick: (seat: Seat, type: 'hardware' | 'engineering') => void;
+}
+
+export function Floor5({ seats, isHardwareUnlocked, isEngineeringMode, onUpdateSeat, getSeat, onEditClick }: FloorProps) {
+  const renderDepartmentGrid = (dept: string, left: number, top: number) => {
+    const layout = departmentLayouts[dept];
+    if (!layout) return null;
+
+    return (
+      <div key={dept} style={{ position: 'absolute', left, top }} className="flex flex-col gap-0.5">
+        <div className="flex flex-col gap-0.5">
+          {layout.map((row, rowIndex) => (
+            <div key={rowIndex} className="flex gap-0.5">
+              {row.map((seatId, colIndex) => {
+                if (!seatId) {
+                  return <div key={`empty-${rowIndex}-${colIndex}`} className="w-[56px] h-[48px]" />;
+                }
+                const seat = getSeat(seatId, '待補入', dept);
+                return (
+                  <div key={`${seat.Seat_ID}-${rowIndex}-${colIndex}`} className="w-[56px] h-[48px]">
+                    <SeatCard 
+                      seat={seat} 
+                      isHardwareUnlocked={isHardwareUnlocked}
+                      isEngineeringMode={isEngineeringMode}
+                      onUpdate={onUpdateSeat}
+                      onEditClick={onEditClick}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      {/* Static Elements */}
+      <div className="absolute left-0 top-[100px] w-[60px] h-[200px] border-r border-b border-black flex items-center justify-center text-xs" style={{ writingMode: 'vertical-rl' }}>員工休息區</div>
+      <div className="absolute left-0 top-[350px] w-[80px] h-[60px]">
+        <SeatCard seat={getSeat('106會議室', '106會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+      <div className="absolute left-0 top-[410px] w-[80px] h-[60px]">
+        <SeatCard seat={getSeat('107會議室', '107會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+      <div className="absolute left-0 top-[470px] w-[180px] h-[100px]">
+        <SeatCard seat={getSeat('108多功能會議室', '108多功能會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+      
+      {/* Top Row Static */}
+      <div className="absolute left-[60px] top-0 w-[40px] h-[60px] border-r border-b border-black flex items-center justify-center text-[10px] text-center">哺(集)<br/>乳室</div>
+      <div className="absolute left-[100px] top-0 w-[114px] h-[60px] border-r border-b border-black flex items-center justify-center text-[10px]">影印室</div>
+      
+      {/* Top Row Seats */}
+      <div className="absolute left-[214px] top-0 w-[1260px] h-[60px] flex">
+        <div className="flex-1 h-full"><SeatCard seat={getSeat('150', '張文櫻', '行政管理處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        <div className="flex-1 h-full"><SeatCard seat={getSeat('601', '葉敏慧', '行政管理處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        <div className="flex-1 h-full"><SeatCard seat={getSeat('105討論室', '會議室', '行政管理處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        <div className="flex-1 h-full"><SeatCard seat={getSeat('201', '丁心雅', '文化金融處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        <div className="flex-1 h-full"><SeatCard seat={getSeat('116', '李又芳', '文化金融處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        <div className="flex-1 h-full"><SeatCard seat={getSeat('113', '林雨欣', 'ESG影響力中心')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        <div className="flex-1 h-full"><SeatCard seat={getSeat('701', '林喜雯', '策略研究處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        <div className="flex-1 h-full"><SeatCard seat={getSeat('501', '待補入', '全球市場處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        <div className="flex-1 h-full"><SeatCard seat={getSeat('822', '胡文嘉', '全球市場處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        <div className="flex-1 h-full"><SeatCard seat={getSeat('120', 'MICOL, JEAN-ROMAIN', '全球市場處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        <div className="flex-1 h-full"><SeatCard seat={getSeat('801', '吳御曄', '全球市場處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+      </div>
+      <div className="absolute left-[1474px] top-0 w-[40px] h-[60px] border-r border-b border-black flex items-center justify-center text-[10px]">影印室</div>
+
+      {/* Bottom Row */}
+      <div className="absolute left-[548px] top-[460px] w-[56px] h-[48px]">
+        <SeatCard seat={getSeat('621', '陳佳欣', '行政管理處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+      <div className="absolute left-[620px] top-[460px] w-[56px] h-[48px]">
+        <SeatCard seat={getSeat('620', '謝竹婷', '行政管理處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+      
+      <div className="absolute left-[548px] top-[520px] w-[128px] h-[48px] border border-black flex items-center justify-center text-[12px] font-bold">
+        電梯
+      </div>
+      {renderDepartmentGrid('Col1', 100, 100)}
+      {renderDepartmentGrid('Col2', 230, 100)}
+      {renderDepartmentGrid('Col3', 360, 100)}
+      {renderDepartmentGrid('Col4', 490, 100)}
+      {renderDepartmentGrid('Col5', 620, 100)}
+      {renderDepartmentGrid('Col6', 750, 100)}
+      {renderDepartmentGrid('Col7', 880, 100)}
+      {renderDepartmentGrid('Col8', 1010, 100)}
+      {renderDepartmentGrid('Col9', 1140, 100)}
+      {renderDepartmentGrid('Col10', 1270, 100)}
+      {renderDepartmentGrid('Col11', 1400, 100)}
+
+      {/* Headers for columns removed */}
+
+      {/* Right Side (院本部) */}
+      
+      <div className="absolute left-[1560px] top-[80px] flex flex-col gap-0.5">
+        <div className="flex gap-0.5">
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('809', '陳昱勳', '公共關係室')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('832', '劉子榮', '公共關係室')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('807', '林怡君', '公共關係室')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-PR-1', '待補入', '公共關係室')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        </div>
+        <div className="flex gap-0.5">
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('810', '鄭伊庭', '公共關係室')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('805', '李嘉欣', '公共關係室')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('803', '楊子鋒', '公共關係室')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-PR-2', '待補入', '公共關係室')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        </div>
+      </div>
+
+      <div className="absolute left-[1790px] top-[80px] w-[172px] h-[96px]">
+        <SeatCard seat={getSeat('104會議室', '104會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+
+      <div className="absolute left-[1970px] top-[80px] w-[112px] h-[96px]">
+        <SeatCard seat={getSeat('101', '王敏惠', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+
+      <div className="absolute left-[2090px] top-[80px] w-[112px] h-[96px]">
+        <SeatCard seat={getSeat('100', '王時思', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+
+      {/* Middle Grid */}
+      <div className="absolute left-[1850px] top-[200px] flex flex-col gap-0.5">
+        <div className="flex gap-0.5">
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-6', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-7', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        </div>
+        <div className="flex gap-0.5">
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('112', '林昀', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('109', '董昱汝', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        </div>
+        <div className="flex gap-0.5">
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('111', '楊斯淳', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-8', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        </div>
+      </div>
+
+      {/* Right Grid */}
+      <div className="absolute left-[2090px] top-[200px] flex flex-col gap-0.5">
+        <div className="flex gap-0.5">
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-1', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-2', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        </div>
+        <div className="flex gap-0.5">
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-3', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('108', '張聖玉', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        </div>
+        <div className="flex gap-0.5">
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-4', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-5', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        </div>
+      </div>
+
+      <div className="absolute left-[1850px] top-[360px] w-[112px] h-[96px]">
+        <SeatCard seat={getSeat('101會議室', '101會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+
+      <div className="absolute left-[1966px] top-[360px] w-[56px] h-[96px] bg-white border border-black flex items-center justify-center text-[12px] font-bold">
+        機房
+      </div>
+
+      <div className="absolute left-[2090px] top-[360px] w-[112px] h-[96px]">
+        <SeatCard seat={getSeat('102', '楊中天', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+
+      <div className="absolute left-[1850px] top-[466px] w-[112px] h-[96px]">
+        <SeatCard seat={getSeat('102會議室', '102會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+
+      <div className="absolute left-[2090px] top-[466px] w-[112px] h-[96px]">
+        <SeatCard seat={getSeat('103', '胡婷俐', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+
+      <div className="absolute left-[1906px] top-[572px] w-[56px] h-[48px] bg-white border border-black flex items-center justify-center text-[10px] font-bold">
+        庫房
+      </div>
+
+      <div className="absolute left-[2090px] top-[572px] w-[112px] h-[96px]">
+        <SeatCard seat={getSeat('103會議室', '103會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} />
+      </div>
+      
+      <div className="absolute left-[1972px] top-[678px] flex flex-col gap-0.5">
+        <div className="flex gap-0.5">
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-9', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-10', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-11', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-12', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        </div>
+        <div className="flex gap-0.5">
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-13', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-14', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-15', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard seat={getSeat('E-HQ-16', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} /></div>
+        </div>
+      </div>
+    </>
+  );
+}
