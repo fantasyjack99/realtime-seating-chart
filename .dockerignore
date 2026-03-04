@@ -3,6 +3,7 @@ dist
 .env
 .git
 .gitignore
+data/
 seats.db
 seats.db-journal
 seats.db-wal

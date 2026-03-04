@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  seat-map-app:
+    build: .
+    image: seat-map-app:latest
+    container_name: seat-map-app
+    restart: unless-stopped
+    ports:
+      # 將主機的 3000 port 映射到容器內的 3000 port
+      # 如果您的 Synology NAS 上 3000 port 已被佔用，可以修改冒號前面的數字，例如 '8080:3000'
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      # 【重要】將資料庫檔案掛載到外部，避免容器更新或重啟時資料遺失
+      # 請確保您的 Synology NAS 上有對應的目錄，例如 ./data
+      # 如果您希望直接掛載單一檔案，可以先在主機上建立一個空的 seats.db 檔案，然後使用 './seats.db:/app/seats.db'
+      - ./data:/app/data
