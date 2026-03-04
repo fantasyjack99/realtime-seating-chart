@@ -395,6 +395,7 @@ async function startServer() {
 
   httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`App Version: 1.1.0 (Login Security Update)`);
   });
 }
 
