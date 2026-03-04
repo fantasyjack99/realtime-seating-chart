@@ -3,14 +3,16 @@ import { io } from 'socket.io-client';
 import { DndContext, DragEndEvent, DragOverlay, closestCenter, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { Seat } from './types';
 import { SeatCard } from './components/SeatCard';
-import { Lock, Unlock, Users } from 'lucide-react';
+import { Lock, Unlock, Users, LogOut } from 'lucide-react';
 import { Floor5 } from './components/Floor5';
 import { Floor3 } from './components/Floor3';
+import { Login } from './components/Login';
 
 const socket = (window as any).__socket || io();
 (window as any).__socket = socket;
 
 export default function App() {
+  const [user, setUser] = useState<string | null>(localStorage.getItem('auth_user'));
   const [seats, setSeats] = useState<Seat[]>([]);
   const [isHardwareUnlocked, setIsHardwareUnlocked] = useState(false);
   const [isEngineeringMode, setIsEngineeringMode] = useState(false);
@@ -237,6 +239,20 @@ export default function App() {
     setIsPanning(false);
   };
 
+  const handleLogin = (email: string) => {
+    setUser(email);
+    localStorage.setItem('auth_user', email);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('auth_user');
+  };
+
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <div 
       ref={scrollContainerRef}
@@ -434,6 +450,17 @@ export default function App() {
           >
             {isEngineeringMode ? <Unlock size={16} /> : <Lock size={16} />}
             {isEngineeringMode ? '工程設置已解鎖' : '工程設置模式'}
+          </button>
+          
+          <div className="h-8 w-px bg-gray-200 mx-2" />
+          
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 rounded-md font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-all text-sm"
+            title="登出系統"
+          >
+            <LogOut size={16} />
+            <span>登出</span>
           </button>
         </div>
       </header>
