@@ -1,17 +1,20 @@
 import React from 'react';
-import { Seat } from '../types';
+import { Seat, DepartmentConfig } from '../types';
 import { SeatCard } from './SeatCard';
 
 interface FloorProps {
   seats: Seat[];
+  departments: DepartmentConfig[];
   isHardwareUnlocked: boolean;
   isEngineeringMode: boolean;
   onUpdateSeat: (seat: Seat) => void;
   getSeat: (id: string, defaultName?: string, dept?: string) => Seat;
   onEditClick: (seat: Seat, type: 'hardware' | 'engineering') => void;
+  onMouseEnter?: (seatId: string) => void;
+  onMouseLeave?: () => void;
 }
 
-export function Floor3({ seats, isHardwareUnlocked, isEngineeringMode, onUpdateSeat, getSeat, onEditClick }: FloorProps) {
+export function Floor3({ seats, departments, isHardwareUnlocked, isEngineeringMode, onUpdateSeat, getSeat, onEditClick, onMouseEnter, onMouseLeave }: FloorProps) {
   // Helper to render a 2x2 or 2xN block
   const renderBlock = (seatIds: (string | null)[][], left: number, top: number, dept: string = '') => {
     return (
@@ -30,10 +33,13 @@ export function Floor3({ seats, isHardwareUnlocked, isEngineeringMode, onUpdateS
                 <div key={seatId} className="w-[56px] h-[48px]">
                   <SeatCard 
                     seat={seat} 
+                    departments={departments}
                     isHardwareUnlocked={isHardwareUnlocked}
                     isEngineeringMode={isEngineeringMode}
                     onUpdate={onUpdateSeat}
                     onEditClick={onEditClick}
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
                   />
                 </div>
               );

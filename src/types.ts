@@ -6,5 +6,15 @@ export interface Seat {
   Port_ID: string;
   Network_Jack: string;
   Department: string;
+  Section?: string;
   Is_Static: number;
+  hasPendingChange?: boolean;
+  pendingNewSeat?: Seat;
+}
+
+export interface DepartmentConfig {
+  id: number;
+  department: string;
+  section: string;
+  color: string;
 }

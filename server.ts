@@ -27,13 +27,27 @@ db.exec(`
     Port_ID TEXT,
     Network_Jack TEXT,
     Department TEXT,
+    Section TEXT,
     Is_Static BOOLEAN DEFAULT 0
+  );
+  
+  CREATE TABLE IF NOT EXISTS departments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    department TEXT NOT NULL,
+    section TEXT NOT NULL,
+    color TEXT NOT NULL
   );
 `);
 
+try {
+  db.exec(`ALTER TABLE seats ADD COLUMN Section TEXT;`);
+} catch (e) {
+  // Column might already exist
+}
+
 const insertSeat = db.prepare(`
-  INSERT OR IGNORE INTO seats (Seat_ID, Staff_Name, Title, Extension, Port_ID, Network_Jack, Department, Is_Static)
-  VALUES (@Seat_ID, @Staff_Name, @Title, @Extension, @Port_ID, @Network_Jack, @Department, @Is_Static)
+  INSERT OR IGNORE INTO seats (Seat_ID, Staff_Name, Title, Extension, Port_ID, Network_Jack, Department, Section, Is_Static)
+  VALUES (@Seat_ID, @Staff_Name, @Title, @Extension, @Port_ID, @Network_Jack, @Department, @Section, @Is_Static)
 `);
 
 // Initial Data Seeding
@@ -298,7 +312,8 @@ const insertMany = db.transaction((seats) => {
   for (const seat of seats) {
     insertSeat.run({
       ...seat,
-      Title: seat.Title || ''
+      Title: seat.Title || '',
+      Section: seat.Section || ''
     });
   }
 });
@@ -323,21 +338,48 @@ async function startServer() {
     res.json(seats);
   });
 
+  app.get("/api/departments", (req, res) => {
+    const deps = db.prepare('SELECT * FROM departments').all();
+    res.json(deps);
+  });
+
+  app.post("/api/departments", (req, res) => {
+    const { department, section, color } = req.body;
+    const stmt = db.prepare('INSERT INTO departments (department, section, color) VALUES (?, ?, ?)');
+    const info = stmt.run(department, section, color);
+    res.json({ id: info.lastInsertRowid, department, section, color });
+  });
+
+  app.put("/api/departments/:id", (req, res) => {
+    const { department, section, color } = req.body;
+    const stmt = db.prepare('UPDATE departments SET department = ?, section = ?, color = ? WHERE id = ?');
+    stmt.run(department, section, color, req.params.id);
+    res.json({ id: Number(req.params.id), department, section, color });
+  });
+
+  app.delete("/api/departments/:id", (req, res) => {
+    const stmt = db.prepare('DELETE FROM departments WHERE id = ?');
+    stmt.run(req.params.id);
+    res.json({ success: true });
+  });
+
   // Socket.io for real-time updates
   io.on('connection', (socket) => {
     console.log('Client connected');
 
     socket.on('update_seat', (data) => {
-      const { Seat_ID, Staff_Name, Title, Extension, Port_ID, Network_Jack, Department } = data;
+      const { Seat_ID, Staff_Name, Title, Extension, Port_ID, Network_Jack, Department, Section } = data;
       db.prepare(`
-        INSERT INTO seats (Seat_ID, Staff_Name, Title, Extension, Port_ID, Network_Jack, Department, Is_Static)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+        INSERT INTO seats (Seat_ID, Staff_Name, Title, Extension, Port_ID, Network_Jack, Department, Section, Is_Static)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
         ON CONFLICT(Seat_ID) DO UPDATE SET
           Staff_Name = excluded.Staff_Name,
           Title = excluded.Title,
           Extension = excluded.Extension,
           Port_ID = excluded.Port_ID,
-          Network_Jack = excluded.Network_Jack
+          Network_Jack = excluded.Network_Jack,
+          Department = excluded.Department,
+          Section = excluded.Section
       `).run(
         Seat_ID,
         Staff_Name || '待補入', 
@@ -345,7 +387,8 @@ async function startServer() {
         Extension || '', 
         Port_ID || '', 
         Network_Jack || '',
-        Department || ''
+        Department || '',
+        Section || ''
       );
       
       io.emit('seat_updated', data);
@@ -353,24 +396,26 @@ async function startServer() {
 
     socket.on('swap_seats', (data) => {
       const { seatA, seatB } = data;
-      // Swap Staff_Name, Title, and Extension, keep Port_ID and Network_Jack
+      // Swap Staff_Name, Title, Extension, Department, Section
       const stmt = db.prepare(`
-        INSERT INTO seats (Seat_ID, Staff_Name, Title, Extension, Port_ID, Network_Jack, Department, Is_Static)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+        INSERT INTO seats (Seat_ID, Staff_Name, Title, Extension, Port_ID, Network_Jack, Department, Section, Is_Static)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
         ON CONFLICT(Seat_ID) DO UPDATE SET
           Staff_Name = excluded.Staff_Name,
           Title = excluded.Title,
-          Extension = excluded.Extension
+          Extension = excluded.Extension,
+          Department = excluded.Department,
+          Section = excluded.Section
       `);
       
       db.transaction(() => {
-        stmt.run(seatA.Seat_ID, seatB.Staff_Name || '待補入', seatB.Title || '', seatB.Extension || '', seatA.Port_ID || '', seatA.Network_Jack || '', seatA.Department || '');
-        stmt.run(seatB.Seat_ID, seatA.Staff_Name || '待補入', seatA.Title || '', seatA.Extension || '', seatB.Port_ID || '', seatB.Network_Jack || '', seatB.Department || '');
+        stmt.run(seatA.Seat_ID, seatB.Staff_Name || '待補入', seatB.Title || '', seatB.Extension || '', seatA.Port_ID || '', seatA.Network_Jack || '', seatB.Department || '', seatB.Section || '');
+        stmt.run(seatB.Seat_ID, seatA.Staff_Name || '待補入', seatA.Title || '', seatA.Extension || '', seatB.Port_ID || '', seatB.Network_Jack || '', seatA.Department || '', seatA.Section || '');
       })();
 
       io.emit('seats_swapped', { 
-        seatA: { ...seatA, Staff_Name: seatB.Staff_Name, Title: seatB.Title || '', Extension: seatB.Extension },
-        seatB: { ...seatB, Staff_Name: seatA.Staff_Name, Title: seatA.Title || '', Extension: seatA.Extension }
+        seatA: { ...seatA, Staff_Name: seatB.Staff_Name, Title: seatB.Title || '', Extension: seatB.Extension, Department: seatB.Department, Section: seatB.Section },
+        seatB: { ...seatB, Staff_Name: seatA.Staff_Name, Title: seatA.Title || '', Extension: seatA.Extension, Department: seatA.Department, Section: seatA.Section }
       });
     });
 

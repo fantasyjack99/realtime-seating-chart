@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Seat } from '../types';
+import { Seat, DepartmentConfig } from '../types';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -11,28 +11,16 @@ export function cn(...inputs: ClassValue[]) {
 
 interface SeatCardProps {
   seat: Seat;
+  departments: DepartmentConfig[];
   isHardwareUnlocked: boolean;
   isEngineeringMode: boolean;
   onUpdate: (seat: Seat) => void;
   onEditClick?: (seat: Seat, type: 'hardware' | 'engineering') => void;
+  onMouseEnter?: (seatId: string) => void;
+  onMouseLeave?: () => void;
 }
 
-const deptColors: Record<string, string> = {
-  '協力工作區': 'bg-[#e6f0ff]',
-  '行政管理處': 'bg-[#fce6ff]',
-  '文化金融處': 'bg-[#f0e6ff]',
-  '法務室': 'bg-[#d9b3ff]',
-  'ESG影響力中心': 'bg-[#b3ffb3]',
-  '策略研究處': 'bg-[#cce6ff]',
-  '全球市場處': 'bg-[#e6ffcc]',
-  '公共關係室': 'bg-[#fff2cc]',
-  '院本部': 'bg-[#e6e6e6]',
-  '財務室': 'bg-[#ffe6cc]',
-  '內容策進處': 'bg-[#cce0ff]',
-  '南部營運中心': 'bg-[#ffccb3]',
-};
-
-export function SeatCard({ seat, isHardwareUnlocked, isEngineeringMode, onUpdate, onEditClick }: SeatCardProps) {
+export function SeatCard({ seat, departments, isHardwareUnlocked, isEngineeringMode, onUpdate, onEditClick, onMouseEnter, onMouseLeave }: SeatCardProps) {
   const { attributes, listeners, setNodeRef: setDraggableRef, transform, isDragging } = useDraggable({
     id: seat.Seat_ID,
     data: seat,
@@ -64,19 +52,23 @@ export function SeatCard({ seat, isHardwareUnlocked, isEngineeringMode, onUpdate
   }
 
   const isEmpty = !seat.Staff_Name || seat.Staff_Name === '待補入' || seat.Staff_Name === '空位';
-  const bgColor = isEmpty ? 'bg-white' : (deptColors[seat.Department] || 'bg-white');
+  
+  const depConfig = departments.find(d => d.department === seat.Department && d.section === seat.Section) 
+                 || departments.find(d => d.department === seat.Department);
+  
+  const bgColor = isEmpty ? '#ffffff' : (depConfig?.color || '#ffffff');
 
   return (
     <div
       ref={setRef}
-      style={style}
+      id={`seat-${seat.Seat_ID}`}
+      style={{ ...style, backgroundColor: bgColor }}
       {...attributes}
       {...listeners}
       className={cn(
         "group relative w-full h-full border border-black flex flex-col items-center justify-center p-0.5",
         (isHardwareUnlocked || isEngineeringMode) ? "cursor-pointer" : "cursor-default",
         isHardwareUnlocked && "cursor-grab active:cursor-grabbing",
-        bgColor,
         isDragging && "opacity-50 z-50 shadow-xl border-blue-500",
         isOver && "border-2 border-blue-500",
       )}
@@ -87,11 +79,23 @@ export function SeatCard({ seat, isHardwareUnlocked, isEngineeringMode, onUpdate
           onEditClick?.(seat, 'hardware');
         }
       }}
+      onMouseEnter={() => onMouseEnter?.(seat.Seat_ID)}
+      onMouseLeave={() => onMouseLeave?.()}
     >
+      {seat.hasPendingChange && (
+        <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-red-500 rounded-full border border-white z-10 shadow-sm animate-pulse"></div>
+      )}
       {/* Tooltip */}
-      <div className="absolute hidden group-hover:flex flex-col z-[100] bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg -top-20 left-1/2 -translate-x-1/2 whitespace-nowrap pointer-events-none">
+      <div className="absolute hidden group-hover:flex flex-col z-[100] bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap pointer-events-none">
+        {seat.hasPendingChange && seat.pendingNewSeat && (
+          <div className="mb-2 pb-2 border-b border-gray-700 text-blue-400 font-bold">
+            暫存變更為: {seat.pendingNewSeat.Staff_Name} ({seat.pendingNewSeat.Extension || '無'})
+          </div>
+        )}
         <div>人員姓名: {seat.Staff_Name}</div>
         <div>分機號碼: {seat.Extension || '無'}</div>
+        <div>處室: {seat.Department || '無'}</div>
+        <div>組別: {seat.Section || '無'}</div>
         <div>Port號碼: {seat.Port_ID || '無'}</div>
         <div>線號: {seat.Network_Jack || '無'}</div>
         <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
