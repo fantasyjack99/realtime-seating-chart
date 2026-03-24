@@ -1,16 +1,15 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
 import { DndContext, DragEndEvent, DragOverEvent, DragOverlay, closestCenter, useSensor, useSensors, PointerSensor, useDroppable } from '@dnd-kit/core';
 import { Seat, DepartmentConfig } from './types';
 import { SeatCard } from './components/SeatCard';
 import { Lock, Unlock, Users, LogOut, ClipboardList, X, Settings } from 'lucide-react';
 import { Floor5 } from './components/Floor5';
 import { Floor3 } from './components/Floor3';
+import { SouthCenter } from './components/SouthCenter';
+import { PhoneDirectory } from './components/PhoneDirectory';
 import { Login } from './components/Login';
 import { DepartmentSettings } from './components/DepartmentSettings';
-
-const socket = (window as any).__socket || io();
-(window as any).__socket = socket;
+import { subscribeToSeats, subscribeToDepartments, updateSeat, swapSeats, updateSeatsBulk } from './services/firebaseService';
 
 function DroppableFloorButton({ id, currentFloor, onClick, children }: { id: string, currentFloor: string, onClick: () => void, children: React.ReactNode }) {
   const { isOver, setNodeRef } = useDroppable({
@@ -44,7 +43,7 @@ export default function App() {
   const [isEngineeringMode, setIsEngineeringMode] = useState(false);
   const [isDeptSettingsOpen, setIsDeptSettingsOpen] = useState(false);
   const [activeSeat, setActiveSeat] = useState<Seat | null>(null);
-  const [currentFloor, setCurrentFloor] = useState<'3F' | '5F'>('5F');
+  const [currentFloor, setCurrentFloor] = useState<'3F' | '5F' | 'South' | 'PhoneDirectory'>('5F');
 
   const [passwordModal, setPasswordModal] = useState<{ type: 'hardware' | 'engineering', isOpen: boolean }>({ type: 'hardware', isOpen: false });
   const [editModal, setEditModal] = useState<{ seat: Seat | null, type: 'hardware' | 'engineering' }>({ seat: null, type: 'hardware' });
@@ -76,47 +75,17 @@ export default function App() {
   const [scrollPos, setScrollPos] = useState({ left: 0, top: 0 });
 
   useEffect(() => {
-    fetch('/api/seats')
-      .then(res => res.json())
-      .then(data => setSeats(data))
-      .catch(err => console.error('Failed to fetch seats:', err));
-
-    fetch('/api/departments')
-      .then(res => res.json())
-      .then(data => setDepartments(data))
-      .catch(err => console.error('Failed to fetch departments:', err));
-
-    socket.on('seat_updated', (updatedSeat: Seat) => {
-      setSeats(prev => {
-        const exists = prev.some(s => s.Seat_ID === updatedSeat.Seat_ID);
-        if (exists) {
-          return prev.map(s => s.Seat_ID === updatedSeat.Seat_ID ? updatedSeat : s);
-        } else {
-          return [...prev, updatedSeat];
-        }
-      });
+    const unsubscribeSeats = subscribeToSeats((data) => {
+      setSeats(data);
     });
 
-    socket.on('seats_swapped', ({ seatA, seatB }: { seatA: Seat, seatB: Seat }) => {
-      setSeats(prev => {
-        let newSeats = [...prev];
-        if (!newSeats.some(s => s.Seat_ID === seatA.Seat_ID)) newSeats.push(seatA);
-        if (!newSeats.some(s => s.Seat_ID === seatB.Seat_ID)) newSeats.push(seatB);
-        return newSeats.map(s => {
-          if (s.Seat_ID === seatA.Seat_ID) {
-            return { ...s, Staff_Name: seatA.Staff_Name, Title: seatA.Title, Extension: seatA.Extension, Department: seatA.Department, Section: seatA.Section };
-          }
-          if (s.Seat_ID === seatB.Seat_ID) {
-            return { ...s, Staff_Name: seatB.Staff_Name, Title: seatB.Title, Extension: seatB.Extension, Department: seatB.Department, Section: seatB.Section };
-          }
-          return s;
-        });
-      });
+    const unsubscribeDepartments = subscribeToDepartments((data) => {
+      setDepartments(data);
     });
 
     return () => {
-      socket.off('seat_updated');
-      socket.off('seats_swapped');
+      unsubscribeSeats();
+      unsubscribeDepartments();
     };
   }, []);
 
@@ -139,16 +108,32 @@ export default function App() {
           let rectSource = elSource?.getBoundingClientRect();
           let rectDest = elDest?.getBoundingClientRect();
 
-          const otherFloorId = `floor-${currentFloor === '3F' ? '5F' : '3F'}`;
+          // Map floor buttons for arrows when seats are on different floors
+          const getFloorBtnId = (floor: string) => `floor-${floor}`;
           
           if (!elSource) {
-            const floorBtn = document.getElementById(otherFloorId);
-            if (floorBtn) rectSource = floorBtn.getBoundingClientRect();
+            // Find which floor the source seat belongs to
+            // For simplicity, we assume if it's not on current floor, it's on one of the others
+            // In a more robust app, we'd have a mapping of seatId -> floor
+            const otherFloors = ['3F', '5F', 'South'].filter(f => f !== currentFloor);
+            for (const f of otherFloors) {
+              const btn = document.getElementById(getFloorBtnId(f));
+              if (btn) {
+                rectSource = btn.getBoundingClientRect();
+                break;
+              }
+            }
           }
 
           if (!elDest) {
-            const floorBtn = document.getElementById(otherFloorId);
-            if (floorBtn) rectDest = floorBtn.getBoundingClientRect();
+            const otherFloors = ['3F', '5F', 'South'].filter(f => f !== currentFloor);
+            for (const f of otherFloors) {
+              const btn = document.getElementById(getFloorBtnId(f));
+              if (btn) {
+                rectDest = btn.getBoundingClientRect();
+                break;
+              }
+            }
           }
 
           if (rectSource && rectDest) {
@@ -207,11 +192,18 @@ export default function App() {
 
   const handleDragOver = (event: DragOverEvent) => {
     const { over } = event;
-    if (over) {
+    if (over && activeSeat) {
+      const isSouthPerson = activeSeat.Department === '南部營運中心';
+      
       if (over.id === 'floor-3F') {
+        if (isSouthPerson) return; // South person cannot go to 3F
         setCurrentFloor(prev => prev !== '3F' ? '3F' : prev);
       } else if (over.id === 'floor-5F') {
+        if (isSouthPerson) return; // South person cannot go to 5F
         setCurrentFloor(prev => prev !== '5F' ? '5F' : prev);
+      } else if (over.id === 'floor-South') {
+        if (!isSouthPerson) return; // Non-South person cannot go to South
+        setCurrentFloor(prev => prev !== 'South' ? 'South' : prev);
       }
     }
   };
@@ -221,7 +213,7 @@ export default function App() {
     setActiveSeat(null);
 
     if (over && active.id !== over.id) {
-      if (over.id === 'floor-3F' || over.id === 'floor-5F') {
+      if (over.id === 'floor-3F' || over.id === 'floor-5F' || over.id === 'floor-South') {
         return;
       }
 
@@ -235,6 +227,15 @@ export default function App() {
 
       const seatA = getSeat(active.id as string);
       const seatB = getSeat(over.id as string);
+
+      // Restriction: South floor cannot drag to/from other floors
+      const isSouthA = seatA.Department === '南部營運中心';
+      const isSouthB = seatB.Department === '南部營運中心';
+      
+      if (isSouthA !== isSouthB) {
+        alert('「南部營運中心」不支援跨樓層座位移轉。');
+        return;
+      }
 
       if (seatA && seatB && seatB.Is_Static === 0) {
         setDragConfirmModal({ seatA, seatB });
@@ -341,12 +342,12 @@ export default function App() {
       }
     }
 
-    socket.emit('update_seat', {
+    updateSeat({
       ...updatedSeat,
       Extension: ext || '',
       Port_ID: port || '',
       Network_Jack: jack || ''
-    });
+    }).catch(err => console.error('Failed to update seat', err));
     return true;
   };
 
@@ -714,26 +715,44 @@ export default function App() {
             <Users size={24} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 tracking-tight">文策院分機座位圖</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-gray-900 tracking-tight">文策院分機座位圖</h1>
+              <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-mono">v1.2.0</span>
+            </div>
             <p className="text-xs text-gray-500 font-medium">視覺化互動與硬體資產管理系統</p>
           </div>
           
-          <div className="flex items-center gap-2 ml-8 bg-gray-100 p-1 rounded-lg">
-            <DroppableFloorButton
-              id="floor-3F"
-              currentFloor={currentFloor}
-              onClick={() => setCurrentFloor('3F')}
-            >
-              3樓
-            </DroppableFloorButton>
-            <DroppableFloorButton
-              id="floor-5F"
-              currentFloor={currentFloor}
-              onClick={() => setCurrentFloor('5F')}
-            >
-              5樓
-            </DroppableFloorButton>
-          </div>
+            <div className="flex items-center gap-2 ml-8 bg-gray-100 p-1 rounded-lg">
+              <DroppableFloorButton
+                id="floor-3F"
+                currentFloor={currentFloor}
+                onClick={() => setCurrentFloor('3F')}
+              >
+                3樓
+              </DroppableFloorButton>
+              <DroppableFloorButton
+                id="floor-5F"
+                currentFloor={currentFloor}
+                onClick={() => setCurrentFloor('5F')}
+              >
+                5樓
+              </DroppableFloorButton>
+              <div className="w-px h-4 bg-gray-300 mx-1" />
+              <DroppableFloorButton
+                id="floor-South"
+                currentFloor={currentFloor}
+                onClick={() => setCurrentFloor('South')}
+              >
+                南部營運中心
+              </DroppableFloorButton>
+              <div className="w-px h-4 bg-gray-300 mx-1" />
+              <button
+                onClick={() => setCurrentFloor('PhoneDirectory')}
+                className={`px-4 py-1.5 rounded-md font-medium text-sm transition-colors ${currentFloor === 'PhoneDirectory' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                電話總表
+              </button>
+            </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -1041,7 +1060,7 @@ export default function App() {
               />
             </svg>
           )}
-          {currentFloor === '5F' ? (
+          {currentFloor === '5F' && (
             <Floor5 
               seats={seats} 
               departments={departments}
@@ -1053,7 +1072,8 @@ export default function App() {
               onMouseEnter={setHoveredSeatId}
               onMouseLeave={() => setHoveredSeatId(null)}
             />
-          ) : (
+          )}
+          {currentFloor === '3F' && (
             <Floor3 
               seats={seats} 
               departments={departments}
@@ -1064,6 +1084,25 @@ export default function App() {
               onEditClick={handleEditClick}
               onMouseEnter={setHoveredSeatId}
               onMouseLeave={() => setHoveredSeatId(null)}
+            />
+          )}
+          {currentFloor === 'South' && (
+            <SouthCenter
+              seats={seats} 
+              departments={departments}
+              isHardwareUnlocked={isHardwareUnlocked} 
+              isEngineeringMode={isEngineeringMode}
+              onUpdateSeat={handleUpdateSeat} 
+              getSeat={getSeat} 
+              onEditClick={handleEditClick}
+              onMouseEnter={setHoveredSeatId}
+              onMouseLeave={() => setHoveredSeatId(null)}
+            />
+          )}
+          {currentFloor === 'PhoneDirectory' && (
+            <PhoneDirectory
+              seats={seats}
+              departments={departments}
             />
           )}
         </div>

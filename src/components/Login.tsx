@@ -117,9 +117,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-1">
           <p className="text-xs text-gray-400">
             © 2024 文化內容策進院 版權所有
+          </p>
+          <p className="text-[10px] text-gray-300 font-mono">
+            System Version: v1.2.0
           </p>
         </div>
       </div>

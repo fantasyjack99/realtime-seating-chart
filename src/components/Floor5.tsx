@@ -57,13 +57,13 @@ export function Floor5({ seats, departments, isHardwareUnlocked, isEngineeringMo
       {/* Static Elements */}
       <div className="absolute left-0 top-[100px] w-[60px] h-[200px] border-r border-b border-black flex items-center justify-center text-xs" style={{ writingMode: 'vertical-rl' }}>員工休息區</div>
       <div className="absolute left-0 top-[350px] w-[80px] h-[60px]">
-        <SeatCard departments={departments} seat={getSeat('106會議室', '106會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
+        <SeatCard departments={departments} seat={getSeat('106會議室', '106會議室', '公共區域')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
       </div>
       <div className="absolute left-0 top-[410px] w-[80px] h-[60px]">
-        <SeatCard departments={departments} seat={getSeat('107會議室', '107會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
+        <SeatCard departments={departments} seat={getSeat('107會議室', '107會議室', '公共區域')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
       </div>
       <div className="absolute left-0 top-[470px] w-[180px] h-[100px]">
-        <SeatCard departments={departments} seat={getSeat('108多功能會議室', '108多功能會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
+        <SeatCard departments={departments} seat={getSeat('108多功能會議室', '108多功能會議室', '公共區域')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
       </div>
       
       {/* Top Row Static */}
@@ -74,7 +74,7 @@ export function Floor5({ seats, departments, isHardwareUnlocked, isEngineeringMo
       <div className="absolute left-[214px] top-0 w-[1260px] h-[60px] flex">
         <div className="flex-1 h-full"><SeatCard departments={departments} seat={getSeat('150', '張文櫻', '行政管理處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
         <div className="flex-1 h-full"><SeatCard departments={departments} seat={getSeat('601', '葉敏慧', '行政管理處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-        <div className="flex-1 h-full"><SeatCard departments={departments} seat={getSeat('105討論室', '會議室', '行政管理處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+        <div className="flex-1 h-full"><SeatCard departments={departments} seat={getSeat('105討論室', '會議室', '公共區域')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
         <div className="flex-1 h-full"><SeatCard departments={departments} seat={getSeat('201', '丁心雅', '文化金融處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
         <div className="flex-1 h-full"><SeatCard departments={departments} seat={getSeat('116', '李又芳', '文化金融處')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
         <div className="flex-1 h-full"><SeatCard departments={departments} seat={getSeat('113', '林雨欣', 'ESG影響力中心')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
@@ -129,51 +129,51 @@ export function Floor5({ seats, departments, isHardwareUnlocked, isEngineeringMo
       </div>
 
       <div className="absolute left-[1790px] top-[80px] w-[172px] h-[96px]">
-        <SeatCard departments={departments} seat={getSeat('104會議室', '104會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
+        <SeatCard departments={departments} seat={getSeat('104會議室', '104會議室', '公共區域')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
       </div>
 
       <div className="absolute left-[1970px] top-[80px] w-[112px] h-[96px]">
-        <SeatCard departments={departments} seat={getSeat('101', '王敏惠', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
+        <SeatCard departments={departments} seat={getSeat('101', '王敏惠', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
       </div>
 
       <div className="absolute left-[2090px] top-[80px] w-[112px] h-[96px]">
-        <SeatCard departments={departments} seat={getSeat('100', '王時思', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
+        <SeatCard departments={departments} seat={getSeat('100', '王時思', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
       </div>
 
       {/* Middle Grid */}
       <div className="absolute left-[1850px] top-[200px] flex flex-col gap-0.5">
         <div className="flex gap-0.5">
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-6', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-7', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-6', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-7', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
         </div>
         <div className="flex gap-0.5">
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('112', '林昀', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('109', '董昱汝', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('112', '林昀', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('109', '董昱汝', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
         </div>
         <div className="flex gap-0.5">
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('111', '楊斯淳', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-8', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('111', '楊斯淳', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-8', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
         </div>
       </div>
 
       {/* Right Grid */}
       <div className="absolute left-[2090px] top-[200px] flex flex-col gap-0.5">
         <div className="flex gap-0.5">
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-1', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-2', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-1', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-2', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
         </div>
         <div className="flex gap-0.5">
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-3', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('108', '張聖玉', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-3', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('108', '張聖玉', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
         </div>
         <div className="flex gap-0.5">
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-4', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-5', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-4', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-5', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
         </div>
       </div>
 
       <div className="absolute left-[1850px] top-[360px] w-[112px] h-[96px]">
-        <SeatCard departments={departments} seat={getSeat('101會議室', '101會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
+        <SeatCard departments={departments} seat={getSeat('101會議室', '101會議室', '公共區域')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
       </div>
 
       <div className="absolute left-[1966px] top-[360px] w-[56px] h-[96px] bg-white border border-black flex items-center justify-center text-[12px] font-bold">
@@ -181,15 +181,15 @@ export function Floor5({ seats, departments, isHardwareUnlocked, isEngineeringMo
       </div>
 
       <div className="absolute left-[2090px] top-[360px] w-[112px] h-[96px]">
-        <SeatCard departments={departments} seat={getSeat('102', '楊中天', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
+        <SeatCard departments={departments} seat={getSeat('102', '楊中天', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
       </div>
 
       <div className="absolute left-[1850px] top-[466px] w-[112px] h-[96px]">
-        <SeatCard departments={departments} seat={getSeat('102會議室', '102會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
+        <SeatCard departments={departments} seat={getSeat('102會議室', '102會議室', '公共區域')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
       </div>
 
       <div className="absolute left-[2090px] top-[466px] w-[112px] h-[96px]">
-        <SeatCard departments={departments} seat={getSeat('103', '胡婷俐', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
+        <SeatCard departments={departments} seat={getSeat('103', '胡婷俐', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
       </div>
 
       <div className="absolute left-[1906px] top-[572px] w-[56px] h-[48px] bg-white border border-black flex items-center justify-center text-[10px] font-bold">
@@ -197,21 +197,21 @@ export function Floor5({ seats, departments, isHardwareUnlocked, isEngineeringMo
       </div>
 
       <div className="absolute left-[2090px] top-[572px] w-[112px] h-[96px]">
-        <SeatCard departments={departments} seat={getSeat('103會議室', '103會議室', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
+        <SeatCard departments={departments} seat={getSeat('103會議室', '103會議室', '公共區域')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />
       </div>
       
       <div className="absolute left-[1972px] top-[678px] flex flex-col gap-0.5">
         <div className="flex gap-0.5">
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-9', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-10', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-11', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-12', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-9', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-10', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-11', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-12', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
         </div>
         <div className="flex gap-0.5">
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-13', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-14', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-15', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
-          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-16', '待補入', '院本部')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-13', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-14', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-15', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
+          <div className="w-[56px] h-[48px]"><SeatCard departments={departments} seat={getSeat('E-HQ-16', '待補入', '')} isHardwareUnlocked={isHardwareUnlocked} isEngineeringMode={isEngineeringMode} onUpdate={onUpdateSeat} onEditClick={onEditClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} /></div>
         </div>
       </div>
     </>

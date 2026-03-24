@@ -13,7 +13,7 @@ export interface Seat {
 }
 
 export interface DepartmentConfig {
-  id: number;
+  id: string;
   department: string;
   section: string;
   color: string;

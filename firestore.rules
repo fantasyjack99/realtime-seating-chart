@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: seats
+    // Document ID: Seat_ID
+    // Fields:
+    //   - Seat_ID: string (required)
+    //   - Staff_Name: string (required)
+    //   - Title: string (optional)
+    //   - Extension: string (optional)
+    //   - Port_ID: string (optional)
+    //   - Network_Jack: string (optional)
+    //   - Department: string (optional)
+    //   - Section: string (optional)
+    //   - Is_Static: number (required, 0 or 1)
+    //
+    // Collection: departments
+    // Document ID: auto-generated
+    // Fields:
+    //   - id: string (required)
+    //   - department: string (required)
+    //   - section: string (required)
+    //   - color: string (required)
+    //
+    // Collection: phone_directory_layout
+    // Document ID: auto-generated
+    // Fields:
+    //   - id: string (required)
+    //   - column_index: number (required)
+    //   - department: string (required)
+    //   - sort_order: number (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Since this is an internal tool, we allow any authenticated user to read and write.
+    // In a production environment, you might want to restrict write access to specific admin users.
+    // For now, we assume any logged-in user (e.g., via the hardcoded login or Google Auth) can edit.
+
+    match /seats/{seatId} {
+      allow read: if true; // Allow public read for the seating chart display
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    match /departments/{deptId} {
+      allow read: if true;
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    match /phone_directory_layout/{layoutId} {
+      allow read: if true;
+      allow create, update, delete: if isAuthenticated();
+    }
+  }
+}

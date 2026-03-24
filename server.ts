@@ -39,10 +39,84 @@ db.exec(`
   );
 `);
 
+// Migration for departments table to add section column if missing
+try {
+  const info = db.prepare("PRAGMA table_info(departments)").all() as any[];
+  const hasSection = info.some(col => col.name === 'section');
+  if (!hasSection) {
+    console.log('Migrating departments to add section column...');
+    db.exec('ALTER TABLE departments ADD COLUMN section TEXT NOT NULL DEFAULT "";');
+  }
+} catch (e) {
+  console.error('Departments migration failed:', e);
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS phone_directory_layout (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    column_index INTEGER NOT NULL,
+    department TEXT NOT NULL,
+    sort_order INTEGER NOT NULL
+  );
+`);
+
+// Check if we need to migrate from old schema (column_index as PK)
+try {
+  const info = db.prepare("PRAGMA table_info(phone_directory_layout)").all() as any[];
+  const hasId = info.some(col => col.name === 'id');
+  if (!hasId) {
+    console.log('Migrating phone_directory_layout to new schema...');
+    const oldData = db.prepare('SELECT * FROM phone_directory_layout').all() as any[];
+    db.exec('DROP TABLE phone_directory_layout');
+    db.exec(`
+      CREATE TABLE phone_directory_layout (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        column_index INTEGER NOT NULL,
+        department TEXT NOT NULL,
+        sort_order INTEGER NOT NULL
+      )
+    `);
+    const insert = db.prepare('INSERT INTO phone_directory_layout (column_index, department, sort_order) VALUES (?, ?, ?)');
+    oldData.forEach((row, i) => {
+      if (row.department) {
+        insert.run(row.column_index, row.department, 0);
+      }
+    });
+  }
+} catch (e) {
+  console.error('Migration failed:', e);
+}
+
 try {
   db.exec(`ALTER TABLE seats ADD COLUMN Section TEXT;`);
 } catch (e) {
   // Column might already exist
+}
+
+// Migration: Move public units to '公共區域'
+try {
+  const publicUnits = [
+    '101會議室', '102會議室', '103會議室', '104會議室', 
+    '106會議室', '107會議室', '108多功能會議室', 
+    '影印室', '機房', '庫房', '檔案室', '105討論室'
+  ];
+  const updateStmt = db.prepare("UPDATE seats SET Department = '公共區域' WHERE Seat_ID = ?");
+  publicUnits.forEach(id => updateStmt.run(id));
+  
+  // Also ensure '公共區域' exists in departments table
+  const checkDept = db.prepare("SELECT COUNT(*) as count FROM departments WHERE department = '公共區域'").get() as any;
+  if (checkDept.count === 0) {
+    db.prepare("INSERT INTO departments (department, section, color) VALUES ('公共區域', '', '#94a3b8')").run();
+  }
+} catch (e) {
+  console.error('Public units migration failed:', e);
+}
+
+// Initialize with 7 columns if empty
+const count = db.prepare('SELECT COUNT(*) as count FROM phone_directory_layout').get() as any;
+if (count.count === 0) {
+  // We don't need to pre-fill with empty departments anymore, 
+  // but we might want to keep the column structure in the UI.
 }
 
 const insertSeat = db.prepare(`
@@ -53,26 +127,28 @@ const insertSeat = db.prepare(`
 // Initial Data Seeding
 const initialData = [
   // 院本部
-  { Seat_ID: '101', Staff_Name: '王敏惠', Title: '院長', Extension: '6601', Port_ID: 'P-101', Network_Jack: 'N-101', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '100', Staff_Name: '王時思', Title: '董事長', Extension: '100', Port_ID: 'P-100', Network_Jack: 'N-100', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '102', Staff_Name: '楊中天', Title: '副院長', Extension: '102', Port_ID: 'P-102', Network_Jack: 'N-102', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '103', Staff_Name: '胡婷俐', Title: '副院長', Extension: '103', Port_ID: 'P-103', Network_Jack: 'N-103', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '101會議室', Staff_Name: '101會議室', Title: '', Extension: '6601', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '102會議室', Staff_Name: '102會議室', Title: '', Extension: '6602', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '103會議室', Staff_Name: '103會議室', Title: '', Extension: '6603', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '104會議室', Staff_Name: '104會議室', Title: '', Extension: '6609', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '106會議室', Staff_Name: '106會議室', Title: '', Extension: '6606', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '107會議室', Staff_Name: '107會議室', Title: '', Extension: '6607', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '108多功能會議室', Staff_Name: '108多功能會議室', Title: '', Extension: '6608', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '影印室', Staff_Name: '影印室', Title: '', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 1 },
-  { Seat_ID: '機房', Staff_Name: '機房', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 1 },
-  { Seat_ID: '庫房', Staff_Name: '庫房', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 1 },
-  { Seat_ID: '檔案室', Staff_Name: '檔案室', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 1 },
-  { Seat_ID: '112', Staff_Name: '林昀', Extension: '112', Port_ID: 'P-112', Network_Jack: 'N-112', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '109', Staff_Name: '董昱汝', Extension: '109', Port_ID: 'P-109', Network_Jack: 'N-109', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '111', Staff_Name: '楊斯淳', Extension: '111', Port_ID: 'P-111', Network_Jack: 'N-111', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '110', Staff_Name: '徐千惠', Extension: '110', Port_ID: 'P-110', Network_Jack: 'N-110', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: '108', Staff_Name: '張聖玉', Extension: '108', Port_ID: 'P-108', Network_Jack: 'N-108', Department: '院本部', Is_Static: 0 },
+  { Seat_ID: '101', Staff_Name: '王敏惠', Title: '院長', Extension: '6601', Port_ID: 'P-101', Network_Jack: 'N-101', Department: '', Is_Static: 0 },
+  { Seat_ID: '100', Staff_Name: '王時思', Title: '董事長', Extension: '100', Port_ID: 'P-100', Network_Jack: 'N-100', Department: '', Is_Static: 0 },
+  { Seat_ID: '102', Staff_Name: '楊中天', Title: '副院長', Extension: '102', Port_ID: 'P-102', Network_Jack: 'N-102', Department: '', Is_Static: 0 },
+  { Seat_ID: '103', Staff_Name: '胡婷俐', Title: '副院長', Extension: '103', Port_ID: 'P-103', Network_Jack: 'N-103', Department: '', Is_Static: 0 },
+
+  // 公共區域
+  { Seat_ID: '101會議室', Staff_Name: '101會議室', Title: '', Extension: '6601', Port_ID: '', Network_Jack: '', Department: '公共區域', Is_Static: 0 },
+  { Seat_ID: '102會議室', Staff_Name: '102會議室', Title: '', Extension: '6602', Port_ID: '', Network_Jack: '', Department: '公共區域', Is_Static: 0 },
+  { Seat_ID: '103會議室', Staff_Name: '103會議室', Title: '', Extension: '6603', Port_ID: '', Network_Jack: '', Department: '公共區域', Is_Static: 0 },
+  { Seat_ID: '104會議室', Staff_Name: '104會議室', Title: '', Extension: '6609', Port_ID: '', Network_Jack: '', Department: '公共區域', Is_Static: 0 },
+  { Seat_ID: '106會議室', Staff_Name: '106會議室', Title: '', Extension: '6606', Port_ID: '', Network_Jack: '', Department: '公共區域', Is_Static: 0 },
+  { Seat_ID: '107會議室', Staff_Name: '107會議室', Title: '', Extension: '6607', Port_ID: '', Network_Jack: '', Department: '公共區域', Is_Static: 0 },
+  { Seat_ID: '108多功能會議室', Staff_Name: '108多功能會議室', Title: '', Extension: '6608', Port_ID: '', Network_Jack: '', Department: '公共區域', Is_Static: 0 },
+  { Seat_ID: '影印室', Staff_Name: '影印室', Title: '', Extension: '', Port_ID: '', Network_Jack: '', Department: '公共區域', Is_Static: 1 },
+  { Seat_ID: '機房', Staff_Name: '機房', Extension: '', Port_ID: '', Network_Jack: '', Department: '公共區域', Is_Static: 1 },
+  { Seat_ID: '庫房', Staff_Name: '庫房', Extension: '', Port_ID: '', Network_Jack: '', Department: '公共區域', Is_Static: 1 },
+  { Seat_ID: '檔案室', Staff_Name: '檔案室', Extension: '', Port_ID: '', Network_Jack: '', Department: '公共區域', Is_Static: 1 },
+  { Seat_ID: '112', Staff_Name: '林昀', Extension: '112', Port_ID: 'P-112', Network_Jack: 'N-112', Department: '', Is_Static: 0 },
+  { Seat_ID: '109', Staff_Name: '董昱汝', Extension: '109', Port_ID: 'P-109', Network_Jack: 'N-109', Department: '', Is_Static: 0 },
+  { Seat_ID: '111', Staff_Name: '楊斯淳', Extension: '111', Port_ID: 'P-111', Network_Jack: 'N-111', Department: '', Is_Static: 0 },
+  { Seat_ID: '110', Staff_Name: '徐千惠', Extension: '110', Port_ID: 'P-110', Network_Jack: 'N-110', Department: '', Is_Static: 0 },
+  { Seat_ID: '108', Staff_Name: '張聖玉', Extension: '108', Port_ID: 'P-108', Network_Jack: 'N-108', Department: '', Is_Static: 0 },
 
   // 行政管理處
   { Seat_ID: '602', Staff_Name: '陳佩芝', Extension: '602', Port_ID: 'P-602', Network_Jack: 'N-602', Department: '行政管理處', Is_Static: 0 },
@@ -106,7 +182,7 @@ const initialData = [
   { Seat_ID: 'E623-2', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '行政管理處', Is_Static: 0 },
   { Seat_ID: 'E618-1', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '行政管理處', Is_Static: 0 },
   { Seat_ID: 'E618-2', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '行政管理處', Is_Static: 0 },
-  { Seat_ID: '105討論室', Staff_Name: '會議室', Title: '', Extension: '6605', Port_ID: '', Network_Jack: '', Department: '行政管理處', Is_Static: 0 },
+  { Seat_ID: '105討論室', Staff_Name: '會議室', Title: '', Extension: '6605', Port_ID: '', Network_Jack: '', Department: '公共區域', Is_Static: 0 },
 
   // 文化金融處
   { Seat_ID: '201', Staff_Name: '丁心雅', Extension: '201', Port_ID: 'P-201', Network_Jack: 'N-201', Department: '文化金融處', Is_Static: 0 },
@@ -228,22 +304,22 @@ const initialData = [
   { Seat_ID: 'E-PR-2', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '公共關係室', Is_Static: 0 },
 
   // 院本部
-  { Seat_ID: 'E-HQ-1', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-2', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-3', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-4', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-5', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-6', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-7', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-8', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-9', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-10', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-11', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-12', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-13', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-14', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-15', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
-  { Seat_ID: 'E-HQ-16', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '院本部', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-1', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-2', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-3', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-4', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-5', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-6', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-7', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-8', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-9', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-10', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-11', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-12', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-13', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-14', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-15', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
+  { Seat_ID: 'E-HQ-16', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '', Is_Static: 0 },
   { Seat_ID: '713', Staff_Name: '黃育千', Extension: '713', Port_ID: 'P-713', Network_Jack: 'N-713', Department: '協力工作區', Is_Static: 0 },
   { Seat_ID: '235', Staff_Name: '王姿婷', Extension: '235', Port_ID: 'P-235', Network_Jack: 'N-235', Department: '協力工作區', Is_Static: 0 },
   { Seat_ID: '518', Staff_Name: '陳昕妤', Extension: '518', Port_ID: 'P-518', Network_Jack: 'N-518', Department: '協力工作區', Is_Static: 0 },
@@ -300,12 +376,38 @@ const initialData = [
   { Seat_ID: '330', Staff_Name: '陳德融', Extension: '330', Port_ID: 'P-330', Network_Jack: 'N-330', Department: '內容策進處', Is_Static: 0 },
 
   // 南部營運中心
+  { Seat_ID: '4001', Staff_Name: '吳商平', Title: '主任', Extension: '4001', Port_ID: 'P-4001', Network_Jack: 'N-4001', Department: '南部營運中心', Is_Static: 0 },
   { Seat_ID: '4005', Staff_Name: '何俊穆', Extension: '4005', Port_ID: 'P-4005', Network_Jack: 'N-4005', Department: '南部營運中心', Is_Static: 0 },
-  { Seat_ID: '4021', Staff_Name: '宋明翰', Extension: '4021', Port_ID: 'P-4021', Network_Jack: 'N-4021', Department: '南部營運中心', Is_Static: 0 },
-  { Seat_ID: '4030', Staff_Name: '黃韻軒', Extension: '4030', Port_ID: 'P-4030', Network_Jack: 'N-4030', Department: '南部營運中心', Is_Static: 0 },
   { Seat_ID: '4003', Staff_Name: '林欣頤', Extension: '4003', Port_ID: 'P-4003', Network_Jack: 'N-4003', Department: '南部營運中心', Is_Static: 0 },
-  { Seat_ID: '718', Staff_Name: '趙曼孜', Extension: '718', Port_ID: 'P-718', Network_Jack: 'N-718', Department: '南部營運中心', Is_Static: 0 },
-  { Seat_ID: '4001', Staff_Name: '吳商平', Extension: '4001', Port_ID: 'P-4001', Network_Jack: 'N-4001', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: '4021', Staff_Name: '宋明翰', Extension: '4021', Port_ID: 'P-4021', Network_Jack: 'N-4021', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: '4006', Staff_Name: '李佳蓉', Extension: '4006', Port_ID: 'P-4006', Network_Jack: 'N-4006', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: '4020', Staff_Name: '會議室', Extension: '4020', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S2', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S3', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S4', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S6', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S7', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S9', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S10', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S11', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S12', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S13', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S14', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S15', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S16', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S17', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S18', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S19', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S20', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S21', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S22', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S23', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S24', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S25', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S26', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S27', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S28', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
+  { Seat_ID: 'S29', Staff_Name: '待補入', Extension: '', Port_ID: '', Network_Jack: '', Department: '南部營運中心', Is_Static: 0 },
 ];
 
 const insertMany = db.transaction((seats) => {
@@ -317,7 +419,6 @@ const insertMany = db.transaction((seats) => {
     });
   }
 });
-insertMany(initialData);
 
 async function startServer() {
   const app = express();
@@ -331,98 +432,6 @@ async function startServer() {
   });
 
   app.use(express.json());
-
-  // API routes
-  app.get("/api/seats", (req, res) => {
-    const seats = db.prepare('SELECT * FROM seats').all();
-    res.json(seats);
-  });
-
-  app.get("/api/departments", (req, res) => {
-    const deps = db.prepare('SELECT * FROM departments').all();
-    res.json(deps);
-  });
-
-  app.post("/api/departments", (req, res) => {
-    const { department, section, color } = req.body;
-    const stmt = db.prepare('INSERT INTO departments (department, section, color) VALUES (?, ?, ?)');
-    const info = stmt.run(department, section, color);
-    res.json({ id: info.lastInsertRowid, department, section, color });
-  });
-
-  app.put("/api/departments/:id", (req, res) => {
-    const { department, section, color } = req.body;
-    const stmt = db.prepare('UPDATE departments SET department = ?, section = ?, color = ? WHERE id = ?');
-    stmt.run(department, section, color, req.params.id);
-    res.json({ id: Number(req.params.id), department, section, color });
-  });
-
-  app.delete("/api/departments/:id", (req, res) => {
-    const stmt = db.prepare('DELETE FROM departments WHERE id = ?');
-    stmt.run(req.params.id);
-    res.json({ success: true });
-  });
-
-  // Socket.io for real-time updates
-  io.on('connection', (socket) => {
-    console.log('Client connected');
-
-    socket.on('update_seat', (data) => {
-      const { Seat_ID, Staff_Name, Title, Extension, Port_ID, Network_Jack, Department, Section } = data;
-      db.prepare(`
-        INSERT INTO seats (Seat_ID, Staff_Name, Title, Extension, Port_ID, Network_Jack, Department, Section, Is_Static)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
-        ON CONFLICT(Seat_ID) DO UPDATE SET
-          Staff_Name = excluded.Staff_Name,
-          Title = excluded.Title,
-          Extension = excluded.Extension,
-          Port_ID = excluded.Port_ID,
-          Network_Jack = excluded.Network_Jack,
-          Department = excluded.Department,
-          Section = excluded.Section
-      `).run(
-        Seat_ID,
-        Staff_Name || '待補入', 
-        Title || '', 
-        Extension || '', 
-        Port_ID || '', 
-        Network_Jack || '',
-        Department || '',
-        Section || ''
-      );
-      
-      io.emit('seat_updated', data);
-    });
-
-    socket.on('swap_seats', (data) => {
-      const { seatA, seatB } = data;
-      // Swap Staff_Name, Title, Extension, Department, Section
-      const stmt = db.prepare(`
-        INSERT INTO seats (Seat_ID, Staff_Name, Title, Extension, Port_ID, Network_Jack, Department, Section, Is_Static)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
-        ON CONFLICT(Seat_ID) DO UPDATE SET
-          Staff_Name = excluded.Staff_Name,
-          Title = excluded.Title,
-          Extension = excluded.Extension,
-          Department = excluded.Department,
-          Section = excluded.Section
-      `);
-      
-      db.transaction(() => {
-        stmt.run(seatA.Seat_ID, seatB.Staff_Name || '待補入', seatB.Title || '', seatB.Extension || '', seatA.Port_ID || '', seatA.Network_Jack || '', seatB.Department || '', seatB.Section || '');
-        stmt.run(seatB.Seat_ID, seatA.Staff_Name || '待補入', seatA.Title || '', seatA.Extension || '', seatB.Port_ID || '', seatB.Network_Jack || '', seatA.Department || '', seatA.Section || '');
-      })();
-
-      io.emit('seats_swapped', { 
-        seatA: { ...seatA, Staff_Name: seatB.Staff_Name, Title: seatB.Title || '', Extension: seatB.Extension, Department: seatB.Department, Section: seatB.Section },
-        seatB: { ...seatB, Staff_Name: seatA.Staff_Name, Title: seatA.Title || '', Extension: seatA.Extension, Department: seatA.Department, Section: seatA.Section }
-      });
-    });
-
-    socket.on('disconnect', () => {
-      console.log('Client disconnected');
-    });
-  });
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
@@ -440,7 +449,15 @@ async function startServer() {
 
   httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`App Version: 1.1.0 (Login Security Update)`);
+    console.log(`App Version: 1.2.0 (UI Update Verification)`);
+    
+    // Seed initial data in the background after server starts
+    try {
+      insertMany(initialData);
+      console.log('Initial data seeding completed');
+    } catch (e) {
+      console.error('Initial data seeding failed:', e);
+    }
   });
 }
 

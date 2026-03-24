@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Save } from 'lucide-react';
 import { DepartmentConfig } from '../types';
+import { addDepartment, updateDepartment, deleteDepartment } from '../services/firebaseService';
 
 interface DepartmentSettingsProps {
   onClose: () => void;
@@ -13,20 +14,43 @@ export function DepartmentSettings({ onClose, departments, onUpdate }: Departmen
   const [newDep, setNewDep] = useState({ department: '', section: '', color: '#e2e8f0' });
 
   useEffect(() => {
-    setLocalDeps(departments);
+    // Group departments by name to keep them together
+    const grouped: DepartmentConfig[] = [];
+    const seen = new Set<string>();
+    
+    departments.forEach(dep => {
+      if (!seen.has(dep.department)) {
+        seen.add(dep.department);
+        // Find all entries for this department and add them together
+        const sameDept = departments.filter(d => d.department === dep.department);
+        grouped.push(...sameDept);
+      }
+    });
+    
+    setLocalDeps(grouped);
   }, [departments]);
 
   const handleAdd = async () => {
     if (!newDep.department || !newDep.section) return;
     
+    // Use existing color for the same department if available
+    const existing = localDeps.find(d => d.department === newDep.department);
+    const colorToUse = existing ? existing.color : newDep.color;
+    
     try {
-      const res = await fetch('/api/departments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newDep)
-      });
-      const added = await res.json();
-      const updated = [...localDeps, added];
+      const added = await addDepartment({ ...newDep, color: colorToUse });
+      
+      // Find the last index of the same department to insert after it
+      const lastIndex = [...localDeps].reverse().findIndex(d => d.department === newDep.department);
+      let updated;
+      if (lastIndex === -1) {
+        updated = [...localDeps, added as DepartmentConfig];
+      } else {
+        const actualIndex = localDeps.length - 1 - lastIndex;
+        updated = [...localDeps];
+        updated.splice(actualIndex + 1, 0, added as DepartmentConfig);
+      }
+      
       setLocalDeps(updated);
       onUpdate(updated);
       setNewDep({ department: '', section: '', color: '#e2e8f0' });
@@ -35,30 +59,97 @@ export function DepartmentSettings({ onClose, departments, onUpdate }: Departmen
     }
   };
 
-  const handleUpdate = async (id: number, field: keyof DepartmentConfig, value: string) => {
+  const handleDuplicate = async (department: string) => {
+    const existing = localDeps.find(d => d.department === department);
+    const color = existing ? existing.color : '#e2e8f0';
+    
+    try {
+      const added = await addDepartment({ department, section: '', color });
+      
+      // Find the last index of the same department to insert after it
+      const lastIndex = [...localDeps].reverse().findIndex(d => d.department === department);
+      const actualIndex = lastIndex === -1 ? localDeps.length - 1 : localDeps.length - 1 - lastIndex;
+      
+      const updated = [...localDeps];
+      updated.splice(actualIndex + 1, 0, added as DepartmentConfig);
+      
+      setLocalDeps(updated);
+      onUpdate(updated);
+    } catch (e) {
+      console.error('Failed to duplicate department', e);
+    }
+  };
+
+  const handleLocalChange = (id: string, field: keyof DepartmentConfig, value: string) => {
     const depToUpdate = localDeps.find(d => d.id === id);
     if (!depToUpdate) return;
     
-    const updatedDep = { ...depToUpdate, [field]: value };
+    let updatedDeps = localDeps.map(d => d.id === id ? { ...d, [field]: value } : d);
     
+    // Synchronize department name for all entries of the same department
+    if (field === 'department') {
+      const oldDept = depToUpdate.department;
+      updatedDeps = updatedDeps.map(d => d.department === oldDept ? { ...d, department: value } : d);
+    }
+
+    // Synchronize color for all entries of the same department
+    if (field === 'color') {
+      const department = depToUpdate.department;
+      updatedDeps = updatedDeps.map(d => d.department === department ? { ...d, color: value } : d);
+    }
+    
+    // If department name changes, inherit color from existing department if it exists
+    if (field === 'department') {
+      const existing = localDeps.find(d => d.department === value && d.id !== id);
+      if (existing) {
+        updatedDeps = updatedDeps.map(d => d.id === id ? { ...d, color: existing.color } : d);
+      }
+    }
+
+    setLocalDeps(updatedDeps);
+  };
+
+  const handleBlur = async (id: string, field: keyof DepartmentConfig) => {
+    const updatedDep = localDeps.find(d => d.id === id);
+    const originalDep = departments.find(d => d.id === id);
+    
+    if (!updatedDep || !originalDep) return;
+    
+    // Only save if the value actually changed
+    if (updatedDep[field] === originalDep[field]) return;
+
     try {
-      await fetch(`/api/departments/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedDep)
-      });
+      if (field === 'color' || field === 'department') {
+        const value = updatedDep[field];
+        const affected = localDeps.filter(d => 
+          field === 'color' ? d.department === updatedDep.department : d.department === value
+        );
+        
+        const rowsToUpdate = field === 'department' 
+          ? localDeps.filter(d => d.department === value) 
+          : affected;
+
+        await Promise.all(rowsToUpdate.map(d => 
+          updateDepartment(d.id, d)
+        ));
+      } else {
+        await updateDepartment(id, updatedDep);
+      }
       
-      const updated = localDeps.map(d => d.id === id ? updatedDep : d);
-      setLocalDeps(updated);
-      onUpdate(updated);
+      onUpdate(localDeps);
     } catch (e) {
       console.error('Failed to update department', e);
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const isFirstOccurrence = (id: string, department: string) => {
+    const first = localDeps.find(d => d.department === department);
+    return first?.id === id;
+  };
+
+  const handleDelete = async (id: string) => {
     try {
-      await fetch(`/api/departments/${id}`, { method: 'DELETE' });
+      await deleteDepartment(id);
       const updated = localDeps.filter(d => d.id !== id);
       setLocalDeps(updated);
       onUpdate(updated);
@@ -88,24 +179,43 @@ export function DepartmentSettings({ onClose, departments, onUpdate }: Departmen
           <div className="space-y-3">
             {localDeps.map(dep => (
               <div key={dep.id} className="grid grid-cols-[1fr_1fr_100px_auto] gap-4 items-center">
-                <input
-                  type="text"
-                  value={dep.department}
-                  onChange={(e) => handleUpdate(dep.id, 'department', e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    value={dep.department}
+                    onChange={(e) => handleLocalChange(dep.id, 'department', e.target.value)}
+                    onBlur={() => handleBlur(dep.id, 'department')}
+                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                  <button
+                    onClick={() => handleDuplicate(dep.department)}
+                    className="absolute right-2 p-1 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                    title="快速複製此處室"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={dep.section}
-                  onChange={(e) => handleUpdate(dep.id, 'section', e.target.value)}
+                  onChange={(e) => handleLocalChange(dep.id, 'section', e.target.value)}
+                  onBlur={() => handleBlur(dep.id, 'section')}
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
-                <input
-                  type="color"
-                  value={dep.color}
-                  onChange={(e) => handleUpdate(dep.id, 'color', e.target.value)}
-                  className="w-full h-9 p-1 border border-gray-300 rounded-lg cursor-pointer"
-                />
+                {isFirstOccurrence(dep.id, dep.department) ? (
+                  <input
+                    type="color"
+                    value={dep.color}
+                    onChange={(e) => handleLocalChange(dep.id, 'color', e.target.value)}
+                    onBlur={() => handleBlur(dep.id, 'color')}
+                    className="w-full h-9 p-1 border border-gray-300 rounded-lg cursor-pointer"
+                  />
+                ) : (
+                  <div 
+                    className="w-full h-9 rounded-lg border border-gray-300" 
+                    style={{ backgroundColor: dep.color }}
+                  />
+                )}
                 <button
                   onClick={() => handleDelete(dep.id)}
                   className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
