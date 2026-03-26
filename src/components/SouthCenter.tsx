@@ -45,6 +45,16 @@ export function SouthCenter({ seats, departments, isHardwareUnlocked, isEngineer
         backgroundSize: '20px 20px'
       }}></div>
 
+      {/* Boundary Line */}
+      <svg className="absolute left-0 top-0 w-[1250px] h-[700px] pointer-events-none z-0 overflow-visible">
+        <path 
+          d="M 40 650 L 40 0 L 1200 0 L 1200 520 L 850 520" 
+          fill="none" 
+          stroke="black" 
+          strokeWidth="4" 
+        />
+      </svg>
+
       {/* Chairman's Office */}
       <div className="absolute left-[40px] top-[230px] w-[180px] h-[260px] bg-[#cccccc] border-2 border-black flex flex-col items-center justify-center text-[18px] font-bold z-10">
         <div>董事長</div>

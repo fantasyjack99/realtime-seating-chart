@@ -10,6 +10,8 @@ export interface Seat {
   Is_Static: number;
   hasPendingChange?: boolean;
   pendingNewSeat?: Seat;
+  isActing?: boolean;
+  isDefaultDept?: boolean;
 }
 
 export interface DepartmentConfig {
@@ -17,4 +19,11 @@ export interface DepartmentConfig {
   department: string;
   section: string;
   color: string;
+}
+
+export interface TitleConfig {
+  id: string;
+  title: string;
+  weight: number;
+  showTitle: boolean;
 }

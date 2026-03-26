@@ -9,7 +9,9 @@ import { SouthCenter } from './components/SouthCenter';
 import { PhoneDirectory } from './components/PhoneDirectory';
 import { Login } from './components/Login';
 import { DepartmentSettings } from './components/DepartmentSettings';
-import { subscribeToSeats, subscribeToDepartments, updateSeat, swapSeats, updateSeatsBulk } from './services/firebaseService';
+import { TitleSettings } from './components/TitleSettings';
+import { subscribeToSeats, subscribeToDepartments, updateSeat, swapSeats, updateSeatsBulk, subscribeToTitleConfigs } from './services/firebaseService';
+import { TitleConfig } from './types';
 
 function DroppableFloorButton({ id, currentFloor, onClick, children }: { id: string, currentFloor: string, onClick: () => void, children: React.ReactNode }) {
   const { isOver, setNodeRef } = useDroppable({
@@ -42,6 +44,8 @@ export default function App() {
   const [isHardwareUnlocked, setIsHardwareUnlocked] = useState(false);
   const [isEngineeringMode, setIsEngineeringMode] = useState(false);
   const [isDeptSettingsOpen, setIsDeptSettingsOpen] = useState(false);
+  const [isTitleSettingsOpen, setIsTitleSettingsOpen] = useState(false);
+  const [titleConfigs, setTitleConfigs] = useState<TitleConfig[]>([]);
   const [activeSeat, setActiveSeat] = useState<Seat | null>(null);
   const [currentFloor, setCurrentFloor] = useState<'3F' | '5F' | 'South' | 'PhoneDirectory'>('5F');
 
@@ -83,9 +87,14 @@ export default function App() {
       setDepartments(data);
     });
 
+    const unsubscribeTitleConfigs = subscribeToTitleConfigs((data) => {
+      setTitleConfigs(data);
+    });
+
     return () => {
       unsubscribeSeats();
       unsubscribeDepartments();
+      unsubscribeTitleConfigs();
     };
   }, []);
 
@@ -164,15 +173,22 @@ export default function App() {
   }, [updateArrowCoords]);
 
   const getSeat = (id: string, defaultName = '待補入', dept = '') => {
-    let seat = seats.find(s => s.Seat_ID === id) || {
-      Seat_ID: id,
-      Staff_Name: defaultName,
-      Extension: '',
-      Port_ID: '',
-      Network_Jack: '',
-      Department: dept,
-      Is_Static: 0
-    };
+    let seat = seats.find(s => s.Seat_ID === id);
+    
+    if (!seat) {
+      seat = {
+        Seat_ID: id,
+        Staff_Name: defaultName,
+        Extension: '',
+        Port_ID: '',
+        Network_Jack: '',
+        Department: dept,
+        Is_Static: 0
+      };
+    } else if (!seat.Department && dept) {
+      // If seat exists but has no department, use the default one passed from the floor layout
+      seat = { ...seat, Department: dept, isDefaultDept: true };
+    }
     
     const pendingChange = pendingChanges.find(p => p.originalSeat.Seat_ID === id);
     if (pendingChange) {
@@ -274,7 +290,8 @@ export default function App() {
         Extension: '',
         Title: '',
         Department: '',
-        Section: ''
+        Section: '',
+        isActing: false
       },
       groupId,
       relatedSeatId: seatB.Seat_ID
@@ -288,7 +305,8 @@ export default function App() {
         Extension: newExt,
         Title: seatA.Title,
         Department: dragDeptAction === 'update' ? dragDept : (seatA.Department || ''),
-        Section: dragDeptAction === 'update' ? dragSection : (seatA.Section || '')
+        Section: dragDeptAction === 'update' ? dragSection : (seatA.Section || ''),
+        isActing: seatA.isActing || false
       },
       groupId,
       relatedSeatId: seatA.Seat_ID
@@ -381,7 +399,7 @@ export default function App() {
   const handleEditClick = (seat: Seat, type: 'hardware' | 'engineering') => {
     setEditError(null);
     setEditModal({ seat, type });
-    setEditDept(seat.Department || '');
+    setEditDept(seat.isDefaultDept ? '' : (seat.Department || ''));
     setEditSection(seat.Section || '');
   };
 
@@ -393,8 +411,10 @@ export default function App() {
       const titleInput = document.getElementById('edit-title') as HTMLInputElement;
       const title = titleInput ? titleInput.value : (editModal.seat.Title || '');
       const ext = (document.getElementById('edit-ext') as HTMLInputElement).value;
+      const isActingInput = document.getElementById('edit-acting') as HTMLInputElement;
+      const isActing = isActingInput ? isActingInput.checked : false;
       
-      const newSeatData = { ...editModal.seat, Staff_Name: name || '待補入', Title: title, Extension: ext, Department: editDept, Section: editSection };
+      const newSeatData = { ...editModal.seat, Staff_Name: name || '待補入', Title: title, Extension: ext, Department: editDept, Section: editSection, isActing };
       
       // Check for duplicates before saving to pending
       if (ext && ext !== editModal.seat.Extension?.trim()) {
@@ -577,6 +597,15 @@ export default function App() {
         />
       )}
 
+      {/* Title Settings Modal */}
+      {isTitleSettingsOpen && (
+        <TitleSettings
+          seats={seats}
+          titleConfigs={titleConfigs}
+          onClose={() => setIsTitleSettingsOpen(false)}
+        />
+      )}
+
       {/* Edit Modal */}
       {editModal.seat && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center" onMouseDown={(e) => e.stopPropagation()}>
@@ -659,6 +688,15 @@ export default function App() {
                     className="w-full border border-gray-300 rounded p-2"
                     onKeyDown={handleEditKeyDown}
                   />
+                </div>
+                <div className="mb-4 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="edit-acting"
+                    defaultChecked={editModal.seat.isActing}
+                    className="w-4 h-4 text-blue-600 rounded border-gray-300"
+                  />
+                  <label htmlFor="edit-acting" className="text-sm font-medium text-gray-700">代理</label>
                 </div>
               </>
             ) : (
@@ -799,6 +837,14 @@ export default function App() {
           >
             <Settings size={16} />
             處室組別設定
+          </button>
+          
+          <button
+            onClick={() => setIsTitleSettingsOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors shadow-sm text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            <Settings size={16} />
+            職稱權重設定
           </button>
           
           <div className="h-8 w-px bg-gray-200 mx-2" />
@@ -1040,7 +1086,7 @@ export default function App() {
           </div>
         )}
 
-        <div id="seat-map-container" className="relative w-[1800px] h-[900px] bg-white">
+        <div id="seat-map-container" className={`relative bg-white ${currentFloor === 'PhoneDirectory' ? 'w-full min-h-[900px]' : 'w-[1800px] h-[900px]'}`}>
           {arrowCoords && (
             <svg className="absolute inset-0 w-full h-full pointer-events-none z-[100]" style={{ overflow: 'visible' }}>
               <defs>
@@ -1103,6 +1149,7 @@ export default function App() {
             <PhoneDirectory
               seats={seats}
               departments={departments}
+              titleConfigs={titleConfigs}
             />
           )}
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Seat, DepartmentConfig } from '../types';
+import { Seat, DepartmentConfig, TitleConfig } from '../types';
 import { Plus, X, GripVertical } from 'lucide-react';
 import { subscribeToPhoneDirectoryLayout, updatePhoneDirectoryLayout } from '../services/firebaseService';
 import {
@@ -28,6 +28,7 @@ import { CSS } from '@dnd-kit/utilities';
 interface PhoneDirectoryProps {
   seats: Seat[];
   departments: DepartmentConfig[];
+  titleConfigs: TitleConfig[];
 }
 
 interface LayoutModule {
@@ -41,10 +42,11 @@ interface SortableModuleProps {
   module: LayoutModule;
   seats: Seat[];
   departments: DepartmentConfig[];
+  titleConfigs: TitleConfig[];
   onRemove: (id: string) => void;
 }
 
-const SortableModule: React.FC<SortableModuleProps> = ({ module, seats, departments, onRemove }) => {
+const SortableModule: React.FC<SortableModuleProps> = ({ module, seats, departments, titleConfigs, onRemove }) => {
   const {
     attributes,
     listeners,
@@ -66,7 +68,48 @@ const SortableModule: React.FC<SortableModuleProps> = ({ module, seats, departme
   const deptColor = deptConfig?.color || '#e5e7eb';
 
   const deptSeats = seats.filter(s => s.Department === deptName && s.Staff_Name);
-  const sections = Array.from(new Set(deptSeats.map(s => s.Section || ''))).sort();
+  
+  // Separate directors and sections
+  const directors: Seat[] = [];
+  const sectionsMap: Record<string, Seat[]> = {};
+  
+  deptSeats.forEach(seat => {
+    if (seat.Title?.includes('處長')) {
+      directors.push(seat);
+    } else {
+      const section = seat.Section || '';
+      if (!sectionsMap[section]) sectionsMap[section] = [];
+      sectionsMap[section].push(seat);
+    }
+  });
+
+  const getWeight = (title?: string) => {
+    const t = title?.trim() || '專員';
+    const config = titleConfigs.find(c => c.title === t);
+    return config ? config.weight : 99;
+  };
+
+  directors.sort((a, b) => getWeight(a.Title) - getWeight(b.Title));
+  
+  const sortedSections = Object.keys(sectionsMap).sort();
+  sortedSections.forEach(sec => {
+    sectionsMap[sec].sort((a, b) => getWeight(a.Title) - getWeight(b.Title));
+  });
+
+  const renderName = (seat: Seat) => {
+    const t = seat.Title?.trim() || '專員';
+    const config = titleConfigs.find(c => c.title === t);
+    const showTitle = config?.showTitle || false;
+    const isActing = seat.isActing || false;
+    
+    return (
+      <div className="flex-1 py-0.5 px-2 border-r border-black truncate flex items-center justify-start text-xs" title={`${seat.Staff_Name} ${seat.Title || ''}`}>
+        <span className="font-medium">{seat.Staff_Name}</span>
+        {showTitle && <span className="ml-1">{t}</span>}
+        {isActing && <span className="ml-0.5" style={{ fontSize: 'calc(100% - 2pt)' }}>代</span>}
+      </div>
+    );
+  };
 
   return (
     <div 
@@ -110,8 +153,19 @@ const SortableModule: React.FC<SortableModuleProps> = ({ module, seats, departme
 
       {/* Sections and Seats */}
       <div className="flex-1 flex flex-col">
-        {sections.map(section => {
-          const sectionSeats = deptSeats.filter(s => (s.Section || '') === section);
+        {/* Directors */}
+        {directors.map((seat, idx) => (
+          <div key={seat.Seat_ID} className={`flex ${idx < directors.length - 1 || sortedSections.length > 0 ? 'border-b border-black' : ''}`}>
+            {renderName(seat)}
+            <div className="w-[60px] py-0.5 px-2 text-center flex items-center justify-center text-xs">
+              {seat.Extension}
+            </div>
+          </div>
+        ))}
+
+        {/* Sections */}
+        {sortedSections.map((section, secIdx) => {
+          const sectionSeats = sectionsMap[section];
           
           return (
             <React.Fragment key={section || 'no-section'}>
@@ -122,11 +176,8 @@ const SortableModule: React.FC<SortableModuleProps> = ({ module, seats, departme
               )}
               
               {sectionSeats.map((seat, idx) => (
-                <div key={seat.Seat_ID} className={`flex ${idx < sectionSeats.length - 1 || section !== sections[sections.length - 1] ? 'border-b border-black' : ''}`}>
-                  <div className="flex-1 py-0.5 px-2 border-r border-black truncate flex items-center justify-start text-xs" title={`${seat.Staff_Name} ${seat.Title || ''}`}>
-                    <span className="font-medium">{seat.Staff_Name}</span>
-                    {seat.Title && <span className="text-[10px] text-gray-500 ml-1">{seat.Title}</span>}
-                  </div>
+                <div key={seat.Seat_ID} className={`flex ${idx < sectionSeats.length - 1 || secIdx < sortedSections.length - 1 ? 'border-b border-black' : ''}`}>
+                  {renderName(seat)}
                   <div className="w-[60px] py-0.5 px-2 text-center flex items-center justify-center text-xs">
                     {seat.Extension}
                   </div>
@@ -164,7 +215,7 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({ id, children }) => {
   );
 };
 
-export const PhoneDirectory: React.FC<PhoneDirectoryProps> = ({ seats, departments }) => {
+export const PhoneDirectory: React.FC<PhoneDirectoryProps> = ({ seats, departments, titleConfigs }) => {
   const [modules, setModules] = useState<LayoutModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -312,7 +363,7 @@ export const PhoneDirectory: React.FC<PhoneDirectoryProps> = ({ seats, departmen
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-2 min-w-max justify-start lg:justify-center pb-8 px-2">
+        <div className="flex gap-2 min-w-max justify-start pb-8 px-2">
           {columns.map((colIndex) => {
             const columnModules = modules
               .filter(m => m.column_index === colIndex);
@@ -335,6 +386,7 @@ export const PhoneDirectory: React.FC<PhoneDirectoryProps> = ({ seats, departmen
                         module={module}
                         seats={seats}
                         departments={departments}
+                        titleConfigs={titleConfigs}
                         onRemove={handleRemoveModule}
                       />
                     ))}

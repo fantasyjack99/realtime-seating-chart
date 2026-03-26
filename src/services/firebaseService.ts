@@ -1,6 +1,6 @@
-import { collection, doc, getDocs, onSnapshot, setDoc, updateDoc, deleteDoc, writeBatch, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, onSnapshot, setDoc, updateDoc, deleteDoc, writeBatch, query, where, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Seat, DepartmentConfig } from '../types';
+import { Seat, DepartmentConfig, TitleConfig } from '../types';
 
 // Seats
 export const getSeats = async (): Promise<Seat[]> => {
@@ -43,7 +43,8 @@ export const swapSeats = async (seatA: Seat, seatB: Seat) => {
     Title: seatA.Title,
     Extension: seatA.Extension,
     Department: seatA.Department,
-    Section: seatA.Section
+    Section: seatA.Section,
+    isActing: seatA.isActing || false
   });
   
   batch.update(refB, {
@@ -51,7 +52,8 @@ export const swapSeats = async (seatA: Seat, seatB: Seat) => {
     Title: seatB.Title,
     Extension: seatB.Extension,
     Department: seatB.Department,
-    Section: seatB.Section
+    Section: seatB.Section,
+    isActing: seatB.isActing || false
   });
   
   await batch.commit();
@@ -78,7 +80,43 @@ export const addDepartment = async (dep: Omit<DepartmentConfig, 'id'>) => {
 
 export const updateDepartment = async (id: string, dep: Partial<DepartmentConfig>) => {
   const ref = doc(db, 'departments', id);
+  
+  // 1. Get current values to see what changed
+  const currentDoc = await getDoc(ref);
+  if (!currentDoc.exists()) return;
+  const current = currentDoc.data() as DepartmentConfig;
+
+  // 2. Update the specific department row
   await updateDoc(ref, dep);
+
+  // 3. If department or section name changed, update all related seats
+  if ((dep.department !== undefined && current.department !== dep.department) || 
+      (dep.section !== undefined && current.section !== dep.section)) {
+    
+    const newDept = dep.department !== undefined ? dep.department : current.department;
+    const newSect = dep.section !== undefined ? dep.section : current.section;
+
+    const batch = writeBatch(db);
+
+    // Update seats table
+    const q = query(collection(db, 'seats'), where('Department', '==', current.department), where('Section', '==', current.section));
+    const snapshot = await getDocs(q);
+    
+    snapshot.docs.forEach((document) => {
+      batch.update(document.ref, { Department: newDept, Section: newSect });
+    });
+    
+    // Update phone directory layout if department name changed
+    if (dep.department !== undefined && current.department !== dep.department) {
+      const layoutQ = query(collection(db, 'phone_directory_layout'), where('department', '==', current.department));
+      const layoutSnapshot = await getDocs(layoutQ);
+      layoutSnapshot.docs.forEach((document) => {
+        batch.update(document.ref, { department: newDept });
+      });
+    }
+
+    await batch.commit();
+  }
 };
 
 export const deleteDepartment = async (id: string) => {
@@ -115,4 +153,17 @@ export const updatePhoneDirectoryLayout = async (layoutData: any[]) => {
   });
   
   await batch.commit();
+};
+
+// Title Configs
+export const subscribeToTitleConfigs = (callback: (configs: TitleConfig[]) => void) => {
+  return onSnapshot(collection(db, 'title_configs'), (snapshot) => {
+    const configs = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as any as TitleConfig));
+    callback(configs);
+  });
+};
+
+export const updateTitleConfig = async (config: TitleConfig) => {
+  const ref = doc(db, 'title_configs', config.id);
+  await setDoc(ref, config, { merge: true });
 };
