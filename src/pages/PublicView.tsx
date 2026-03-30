@@ -127,9 +127,7 @@ export default function PublicView() {
             </div>
           </div>
           <div className="flex items-center">
-            <Link to="/admin" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-md transition-colors">
-              進入後台
-            </Link>
+            {/* 隱藏後台入口，正式環境請手動輸入 /admin 進入 */}
           </div>
         </div>
       </header>

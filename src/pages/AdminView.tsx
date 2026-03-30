@@ -857,13 +857,6 @@ export default function AdminView() {
           
           <div className="h-8 w-px bg-gray-200 mx-2" />
           
-          <Link
-            to="/"
-            className="flex items-center gap-2 px-4 py-2 rounded-md font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 transition-colors text-sm"
-          >
-            返回公開前台
-          </Link>
-          
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 px-4 py-2 rounded-md font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-all text-sm"
