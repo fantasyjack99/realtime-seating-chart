@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// Version: 1.2.2 - Login Credentials Update
 import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react';
 import { signInAnonymously } from 'firebase/auth';
 import { auth } from '../firebase';

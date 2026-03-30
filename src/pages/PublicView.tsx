@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+// Version: 1.2.1 - Production UI Update
 import { Link } from 'react-router-dom';
 import { Seat, DepartmentConfig, TitleConfig } from '../types';
 import { Floor5 } from '../components/Floor5';

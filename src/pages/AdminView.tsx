@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+// Version: 1.2.2 - Admin UI Update
 import { Link } from 'react-router-dom';
 import { DndContext, DragEndEvent, DragOverEvent, DragOverlay, closestCenter, useSensor, useSensors, PointerSensor, useDroppable } from '@dnd-kit/core';
 import { Seat, DepartmentConfig } from '../types';
