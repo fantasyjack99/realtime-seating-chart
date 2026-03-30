@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react';
+import { signInAnonymously } from 'firebase/auth';
+import { auth } from '../firebase';
 
 interface LoginProps {
   onLogin: (email: string) => void;
@@ -11,17 +13,22 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
     // Hardcoded credentials as requested by the user
     if (email === 'mars.cheng@taicca.tw' && password === 'Aa917029') {
-      setTimeout(() => {
+      try {
+        await signInAnonymously(auth);
         onLogin(email);
+      } catch (err) {
+        console.error('Firebase auth error:', err);
+        setError('登入系統發生錯誤，請稍後再試');
+      } finally {
         setIsLoading(false);
-      }, 800);
+      }
     } else {
       setTimeout(() => {
         setError('帳號或密碼錯誤，請重新輸入');

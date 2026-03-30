@@ -29,6 +29,7 @@ interface PhoneDirectoryProps {
   seats: Seat[];
   departments: DepartmentConfig[];
   titleConfigs: TitleConfig[];
+  isEngineeringMode?: boolean;
 }
 
 interface LayoutModule {
@@ -44,9 +45,10 @@ interface SortableModuleProps {
   departments: DepartmentConfig[];
   titleConfigs: TitleConfig[];
   onRemove: (id: string) => void;
+  isEngineeringMode?: boolean;
 }
 
-const SortableModule: React.FC<SortableModuleProps> = ({ module, seats, departments, titleConfigs, onRemove }) => {
+const SortableModule: React.FC<SortableModuleProps> = ({ module, seats, departments, titleConfigs, onRemove, isEngineeringMode }) => {
   const {
     attributes,
     listeners,
@@ -118,22 +120,26 @@ const SortableModule: React.FC<SortableModuleProps> = ({ module, seats, departme
       className="mb-4 border border-black bg-white flex flex-col group relative"
     >
       {/* Drag Handle */}
-      <div 
-        {...attributes} 
-        {...listeners}
-        className="absolute -left-6 top-1/2 -translate-y-1/2 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
-      >
-        <GripVertical size={20} />
-      </div>
+      {isEngineeringMode && (
+        <div 
+          {...attributes} 
+          {...listeners}
+          className="absolute -left-6 top-1/2 -translate-y-1/2 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
+        >
+          <GripVertical size={20} />
+        </div>
+      )}
 
       {/* Remove button */}
-      <button
-        onClick={() => onRemove(module.id)}
-        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
-        title="移除此處室"
-      >
-        <X size={12} />
-      </button>
+      {isEngineeringMode && (
+        <button
+          onClick={() => onRemove(module.id)}
+          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
+          title="移除此處室"
+        >
+          <X size={12} />
+        </button>
+      )}
 
       {/* Department Header */}
       <div className="flex border-b border-black">
@@ -215,7 +221,7 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({ id, children }) => {
   );
 };
 
-export const PhoneDirectory: React.FC<PhoneDirectoryProps> = ({ seats, departments, titleConfigs }) => {
+export const PhoneDirectory: React.FC<PhoneDirectoryProps> = ({ seats, departments, titleConfigs, isEngineeringMode }) => {
   const [modules, setModules] = useState<LayoutModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -388,13 +394,15 @@ export const PhoneDirectory: React.FC<PhoneDirectoryProps> = ({ seats, departmen
                         departments={departments}
                         titleConfigs={titleConfigs}
                         onRemove={handleRemoveModule}
+                        isEngineeringMode={isEngineeringMode}
                       />
                     ))}
                   </SortableContext>
 
                   {/* Add Module Button */}
-                  <div className="mt-auto pt-4">
-                    <div className="relative group">
+                  {isEngineeringMode && (
+                    <div className="mt-auto pt-4">
+                      <div className="relative group">
                       <select
                         className="w-full appearance-none bg-white border border-gray-300 text-gray-600 py-1.5 px-3 pr-8 rounded text-xs leading-tight focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer text-center font-medium"
                         onChange={(e) => {
@@ -415,6 +423,7 @@ export const PhoneDirectory: React.FC<PhoneDirectoryProps> = ({ seats, departmen
                       </div>
                     </div>
                   </div>
+                  )}
                 </DroppableColumn>
               </div>
             );

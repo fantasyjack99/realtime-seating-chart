@@ -46,19 +46,23 @@ service cloud.firestore {
     // For now, we assume any logged-in user (e.g., via the hardcoded login or Google Auth) can edit.
 
     match /seats/{seatId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
 
     match /departments/{deptId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
 
     match /phone_directory_layout/{layoutId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
 
     match /title_configs/{configId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
   }
 }
