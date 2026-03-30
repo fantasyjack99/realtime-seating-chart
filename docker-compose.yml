@@ -2,14 +2,18 @@ version: '3.8'
 
 services:
   seat-management-app:
-    build: .
-    image: seat-management-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: seat-management-app
     restart: always
     ports:
-      - "3000:3000" # 左邊是 NAS 的對外 Port，右邊是容器內的 Port (請勿修改右邊)
+      - "3000:3000"
     volumes:
-      - ./data:/app/data # 將容器內的資料庫掛載到 NAS 的 ./data 資料夾，確保資料不會遺失
+      - seat-data:/app/data
     environment:
       - NODE_ENV=production
       - PORT=3000
+
+volumes:
+  seat-data:
