@@ -12,10 +12,8 @@ import { PhoneDirectory } from '../components/PhoneDirectory';
 import { Login } from '../components/Login';
 import { DepartmentSettings } from '../components/DepartmentSettings';
 import { TitleSettings } from '../components/TitleSettings';
-import { subscribeToSeats, subscribeToDepartments, updateSeat, swapSeats, updateSeatsBulk, subscribeToTitleConfigs } from '../services/firebaseService';
+import { subscribeToSeats, subscribeToDepartments, updateSeat, swapSeats, updateSeatsBulk, subscribeToTitleConfigs } from '../services/dataService';
 import { TitleConfig } from '../types';
-import { signOut } from 'firebase/auth';
-import { auth } from '../firebase';
 
 function DroppableFloorButton({ id, currentFloor, onClick, children }: { id: string, currentFloor: string, onClick: () => void, children: React.ReactNode }) {
   const { isOver, setNodeRef } = useDroppable({
@@ -528,11 +526,6 @@ export default function AdminView() {
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (err) {
-      console.error('Logout error:', err);
-    }
     setUser(null);
     localStorage.removeItem('auth_user');
   };

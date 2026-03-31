@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Save } from 'lucide-react';
 import { DepartmentConfig } from '../types';
-import { addDepartment, updateDepartment, deleteDepartment } from '../services/firebaseService';
+import { addDepartment, updateDepartment, deleteDepartment } from '../services/dataService';
 
 interface DepartmentSettingsProps {
   onClose: () => void;

@@ -37,6 +37,13 @@ db.exec(`
     section TEXT NOT NULL,
     color TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS title_configs (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    weight INTEGER NOT NULL,
+    showTitle BOOLEAN DEFAULT 1
+  );
 `);
 
 // Migration for departments table to add section column if missing
@@ -458,6 +465,138 @@ async function startServer() {
     } catch (e) {
       console.error('Initial data seeding failed:', e);
     }
+  });
+
+  // --- Socket.IO Handlers for Real-time Sync ---
+  const broadcastAll = () => {
+    try {
+      const seats = db.prepare('SELECT * FROM seats').all();
+      const departments = db.prepare('SELECT * FROM departments').all();
+      const layout = db.prepare('SELECT * FROM phone_directory_layout').all();
+      const titleConfigs = db.prepare('SELECT * FROM title_configs').all();
+      
+      io.emit('sync_seats', seats);
+      io.emit('sync_departments', departments);
+      io.emit('sync_layout', layout);
+      io.emit('sync_title_configs', titleConfigs);
+    } catch (e) {
+      console.error('Broadcast failed:', e);
+    }
+  };
+
+  io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
+    
+    // Send initial data to the newly connected client
+    try {
+      socket.emit('sync_seats', db.prepare('SELECT * FROM seats').all());
+      socket.emit('sync_departments', db.prepare('SELECT * FROM departments').all());
+      socket.emit('sync_layout', db.prepare('SELECT * FROM phone_directory_layout').all());
+      socket.emit('sync_title_configs', db.prepare('SELECT * FROM title_configs').all());
+    } catch (e) {
+      console.error('Initial sync failed:', e);
+    }
+
+    // Seats
+    socket.on('update_seat', (seat) => {
+      try {
+        const stmt = db.prepare(`
+          UPDATE seats SET 
+            Staff_Name = @Staff_Name, Title = @Title, Extension = @Extension, 
+            Department = @Department, Section = @Section, isActing = @isActing
+          WHERE Seat_ID = @Seat_ID
+        `);
+        stmt.run({ ...seat, isActing: seat.isActing ? 1 : 0 });
+        broadcastAll();
+      } catch (e) { console.error(e); }
+    });
+
+    socket.on('update_seats_bulk', ({ oldDept, oldSect, newDept, newSect }) => {
+      try {
+        const stmt = db.prepare('UPDATE seats SET Department = ?, Section = ? WHERE Department = ? AND Section = ?');
+        stmt.run(newDept, newSect, oldDept, oldSect);
+        broadcastAll();
+      } catch (e) { console.error(e); }
+    });
+
+    socket.on('swap_seats', ({ seatA, seatB }) => {
+      try {
+        const stmt = db.prepare(`
+          UPDATE seats SET 
+            Staff_Name = @Staff_Name, Title = @Title, Extension = @Extension, 
+            Department = @Department, Section = @Section, isActing = @isActing
+          WHERE Seat_ID = @Seat_ID
+        `);
+        db.transaction(() => {
+          stmt.run({ ...seatA, isActing: seatA.isActing ? 1 : 0 });
+          stmt.run({ ...seatB, isActing: seatB.isActing ? 1 : 0 });
+        })();
+        broadcastAll();
+      } catch (e) { console.error(e); }
+    });
+
+    // Departments
+    socket.on('add_department', (dep, callback) => {
+      try {
+        const stmt = db.prepare('INSERT INTO departments (department, section, color) VALUES (?, ?, ?)');
+        const info = stmt.run(dep.department, dep.section, dep.color);
+        broadcastAll();
+        if (callback) callback({ ...dep, id: info.lastInsertRowid.toString() });
+      } catch (e) { console.error(e); }
+    });
+
+    socket.on('update_department', ({ id, dep }) => {
+      try {
+        const current = db.prepare('SELECT * FROM departments WHERE id = ?').get(id) as any;
+        if (!current) return;
+
+        const newDept = dep.department !== undefined ? dep.department : current.department;
+        const newSect = dep.section !== undefined ? dep.section : current.section;
+        const newColor = dep.color !== undefined ? dep.color : current.color;
+
+        db.transaction(() => {
+          db.prepare('UPDATE departments SET department = ?, section = ?, color = ? WHERE id = ?').run(newDept, newSect, newColor, id);
+          
+          if (newDept !== current.department || newSect !== current.section) {
+            db.prepare('UPDATE seats SET Department = ?, Section = ? WHERE Department = ? AND Section = ?').run(newDept, newSect, current.department, current.section);
+          }
+          if (newDept !== current.department) {
+            db.prepare('UPDATE phone_directory_layout SET department = ? WHERE department = ?').run(newDept, current.department);
+          }
+        })();
+        broadcastAll();
+      } catch (e) { console.error(e); }
+    });
+
+    socket.on('delete_department', (id) => {
+      try {
+        db.prepare('DELETE FROM departments WHERE id = ?').run(id);
+        broadcastAll();
+      } catch (e) { console.error(e); }
+    });
+
+    // Phone Directory Layout
+    socket.on('update_layout', (layoutData) => {
+      try {
+        db.transaction(() => {
+          db.prepare('DELETE FROM phone_directory_layout').run();
+          const stmt = db.prepare('INSERT INTO phone_directory_layout (column_index, department, sort_order) VALUES (?, ?, ?)');
+          layoutData.forEach((item: any) => {
+            stmt.run(item.column_index, item.department, item.sort_order);
+          });
+        })();
+        broadcastAll();
+      } catch (e) { console.error(e); }
+    });
+
+    // Title Configs
+    socket.on('update_title_config', (config) => {
+      try {
+        const stmt = db.prepare('INSERT OR REPLACE INTO title_configs (id, title, weight, showTitle) VALUES (?, ?, ?, ?)');
+        stmt.run(config.id, config.title, config.weight, config.showTitle ? 1 : 0);
+        broadcastAll();
+      } catch (e) { console.error(e); }
+    });
   });
 }
 

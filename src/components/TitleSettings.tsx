@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
 import { Seat, TitleConfig } from '../types';
-import { updateTitleConfig } from '../services/firebaseService';
+import { updateTitleConfig } from '../services/dataService';
 
 interface TitleSettingsProps {
   onClose: () => void;

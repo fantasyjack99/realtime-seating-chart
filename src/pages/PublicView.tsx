@@ -6,7 +6,7 @@ import { Floor5 } from '../components/Floor5';
 import { Floor3 } from '../components/Floor3';
 import { SouthCenter } from '../components/SouthCenter';
 import { PhoneDirectory } from '../components/PhoneDirectory';
-import { subscribeToSeats, subscribeToDepartments, subscribeToTitleConfigs } from '../services/firebaseService';
+import { subscribeToSeats, subscribeToDepartments, subscribeToTitleConfigs } from '../services/dataService';
 
 export default function PublicView() {
   const [seats, setSeats] = useState<Seat[]>([]);

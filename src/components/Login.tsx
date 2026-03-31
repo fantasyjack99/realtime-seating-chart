@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 // Version: 1.2.2 - Login Credentials Update
 import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react';
-import { signInAnonymously } from 'firebase/auth';
-import { auth } from '../firebase';
 
 interface LoginProps {
   onLogin: (email: string) => void;
@@ -21,15 +19,10 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     // Hardcoded credentials as requested by the user
     if (email === 'mars.cheng@taicca.tw' && password === 'Aa917029') {
-      try {
-        await signInAnonymously(auth);
+      setTimeout(() => {
         onLogin(email);
-      } catch (err) {
-        console.error('Firebase auth error:', err);
-        setError('登入系統發生錯誤，請稍後再試');
-      } finally {
         setIsLoading(false);
-      }
+      }, 500);
     } else {
       setTimeout(() => {
         setError('帳號或密碼錯誤，請重新輸入');

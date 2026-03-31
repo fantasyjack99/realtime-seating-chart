@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Seat, DepartmentConfig, TitleConfig } from '../types';
 import { Plus, X, GripVertical } from 'lucide-react';
-import { subscribeToPhoneDirectoryLayout, updatePhoneDirectoryLayout } from '../services/firebaseService';
+import { subscribeToPhoneDirectoryLayout, updatePhoneDirectoryLayout } from '../services/dataService';
 import {
   DndContext,
   closestCenter,
