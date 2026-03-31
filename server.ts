@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { createServer as createViteServer } from 'vite';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -439,6 +440,58 @@ async function startServer() {
   });
 
   app.use(express.json());
+  app.use(cors()); // Enable CORS for REST API endpoints
+
+  // --- RESTful API Endpoints for Data Integration ---
+  
+  // Basic API Key authentication middleware (Optional but recommended)
+  const apiKeyAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // You can set an environment variable or hardcode a key here for security
+    // Example: const validKey = process.env.API_KEY || 'your-secret-key';
+    // const providedKey = req.headers['x-api-key'];
+    // if (providedKey !== validKey) return res.status(401).json({ error: 'Unauthorized' });
+    next(); // Currently open to all, uncomment above to secure
+  };
+
+  // GET /api/seats - Retrieve all seats
+  app.get('/api/seats', apiKeyAuth, (req, res) => {
+    try {
+      const seats = db.prepare('SELECT * FROM seats').all();
+      res.json(seats);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to fetch seats' });
+    }
+  });
+
+  // GET /api/departments - Retrieve all departments
+  app.get('/api/departments', apiKeyAuth, (req, res) => {
+    try {
+      const departments = db.prepare('SELECT * FROM departments').all();
+      res.json(departments);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to fetch departments' });
+    }
+  });
+
+  // GET /api/titles - Retrieve all title configurations
+  app.get('/api/titles', apiKeyAuth, (req, res) => {
+    try {
+      const titles = db.prepare('SELECT * FROM title_configs').all();
+      res.json(titles);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to fetch titles' });
+    }
+  });
+
+  // GET /api/layout - Retrieve phone directory layout
+  app.get('/api/layout', apiKeyAuth, (req, res) => {
+    try {
+      const layout = db.prepare('SELECT * FROM phone_directory_layout').all();
+      res.json(layout);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to fetch layout' });
+    }
+  });
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
